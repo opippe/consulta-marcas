@@ -1,16 +1,7 @@
+import type { Processo } from "@/app/consulta/types";
+
 const INFOSIMPLES_ENDPOINT =
   "https://api.infosimples.com/api/v2/consultas/inpi/marcas";
-
-type Processo = {
-  numero?: string;
-  prioridade?: string;
-  tipo?: string;
-  marca?: string;
-  registro?: string;
-  situacao?: string;
-  titular?: string;
-  classe?: string;
-};
 
 type InfosimplesResponse = {
   code?: number;

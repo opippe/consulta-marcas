@@ -1,6 +1,7 @@
-# Consulta de marcas
+# Marca Certa
 
-Site local para pesquisar processos de marcas do INPI usando a API da Infosimples.
+Landing page e diagnóstico preliminar de marcas para a Marca Certa, usando a
+API da Infosimples para pesquisar processos públicos relacionados a marcas.
 
 ## Configuração
 
@@ -21,10 +22,14 @@ npm run dev
 
 Abra `http://localhost:3000` no navegador e pesquise pelo nome da marca.
 
+Após uma consulta real, os resultados são exibidos na página
+`http://localhost:3000/resultados` sem repetir a requisição à API durante a
+navegação.
+
 Para editar os estilos da área de resultados sem consumir requisições da API,
 clique em `Visualizar resultado de exemplo`. Essa prévia usa dados fictícios
 apenas no navegador. Também é possível abrir diretamente
-`http://localhost:3000/?preview=resultados`.
+`http://localhost:3000/resultados?preview=resultados`.
 
 Para validar a versão de produção local:
 

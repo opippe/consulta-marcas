@@ -1,117 +1,47 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import ConsultaFooter from "@/app/components/consulta/ConsultaFooter";
+import ConsultaHeader from "@/app/components/consulta/ConsultaHeader";
+import { registrationCtaUrl } from "@/app/consulta/brand";
+import { useConsulta } from "@/app/consulta/consulta-context";
+import type { ConsultaResponse } from "@/app/consulta/types";
+import { eyebrow, focusRing, note } from "@/app/consulta/ui";
 
-type Processo = {
-  numero?: string;
-  prioridade?: string;
-  tipo?: string;
-  marca?: string;
-  registro?: string;
-  situacao?: string;
-  titular?: string;
-  classe?: string;
-};
+function CheckItem({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2.5 text-[0.76rem] font-bold text-ink-soft">
+      <span
+        className="grid size-5 shrink-0 place-items-center rounded-full bg-accent-soft text-[0.7rem] font-extrabold text-accent-dark"
+        aria-hidden="true"
+      >
+        ✓
+      </span>
+      {children}
+    </div>
+  );
+}
 
-type ConsultaResponse = {
-  processos: Processo[];
-  processosTotal: number;
-  totalPaginas: number;
-  siteReceipts: string[];
-};
-
-const PREVIEW_MARCA = "Horizonte";
-
-const PREVIEW_RESULT: ConsultaResponse = {
-  processos: [
-    {
-      numero: "925847316",
-      registro: "Pedido de marca",
-      marca: "HORIZONTE VIVO",
-      tipo: "Nominativa",
-      titular: "Horizonte Vivo Comércio e Serviços Ltda.",
-      situacao: "Registro em vigor",
-      classe: "35 — publicidade e negócios",
-      prioridade: "12/03/2021",
-    },
-    {
-      numero: "918204771",
-      registro: "Pedido de marca",
-      marca: "HORIZONTE",
-      tipo: "Mista",
-      titular: "Mariana Alves da Costa",
-      situacao: "Aguardando exame",
-      classe: "41 — educação e entretenimento",
-      prioridade: "08/11/2022",
-    },
-    {
-      numero: "907531642",
-      registro: "Registro nº 907531642",
-      marca: "NOVO HORIZONTE",
-      tipo: "Nominativa",
-      titular: "Instituto Novo Horizonte",
-      situacao: "Deferido",
-      classe: "44 — serviços médicos",
-      prioridade: "21/06/2023",
-    },
-    {
-      numero: "899430218",
-      registro: "Pedido de marca",
-      marca: "HORIZONTE AZUL",
-      tipo: "Mista",
-      titular: "Azul Horizonte Tecnologia S.A.",
-      situacao: "Em exame",
-      classe: "42 — tecnologia e desenvolvimento de software",
-      prioridade: "04/02/2024",
-    },
-  ],
-  processosTotal: 4,
-  totalPaginas: 1,
-  siteReceipts: [],
-};
-
-const focusRing =
-  "focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-[rgba(200,100,53,0.32)] focus-visible:outline-offset-4";
-
-const eyebrow =
-  "mb-4 text-[0.7rem] font-extrabold tracking-[0.15em] text-accent-dark uppercase";
-
-const note =
-  "before:size-1.25 before:flex-none before:rounded-full before:bg-accent before:content-[''] inline-flex items-center gap-2 text-[0.7rem] font-bold tracking-[0.08em] text-ink-soft uppercase";
-
-const statusPill =
-  "inline-block max-w-55 rounded-status px-2.25 py-1.5 text-[0.7rem] font-bold leading-[1.25]";
-
-function getStatusTone(situacao = "") {
-  if (/vigor|registrad|deferid/i.test(situacao)) {
-    return "bg-positive-soft text-positive";
-  }
-
-  if (/pend|aguard|exame|oposi/i.test(situacao)) {
-    return "bg-warning-soft text-warning";
-  }
-
-  return "bg-[#eef2f0] text-ink-soft";
+function ServiceIcon({ children }: { children: ReactNode }) {
+  return (
+    <span
+      className="grid size-11 place-items-center rounded-2xl bg-accent-soft text-[1.2rem] font-extrabold text-accent-dark"
+      aria-hidden="true"
+    >
+      {children}
+    </span>
+  );
 }
 
 export default function Home() {
-  const searchParams = useSearchParams();
-  const urlPreview = searchParams.get("preview") === "resultados";
+  const router = useRouter();
+  const { setConsulta } = useConsulta();
   const [marca, setMarca] = useState("");
-  const [searchedMarca, setSearchedMarca] = useState("");
-  const [result, setResult] = useState<ConsultaResponse | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isPreview, setIsPreview] = useState(false);
-  const [isUrlPreviewDismissed, setIsUrlPreviewDismissed] = useState(false);
-  const showPreview = isPreview || (urlPreview && !isUrlPreviewDismissed);
-  const displayedMarca = showPreview
-    ? marca || PREVIEW_MARCA
-    : searchedMarca;
-  const displayedResult = showPreview ? PREVIEW_RESULT : result;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,18 +49,11 @@ export default function Home() {
     const nomeMarca = marca.trim();
     if (nomeMarca.length < 2) {
       setError("Informe pelo menos 2 caracteres para iniciar a consulta.");
-      setResult(null);
-      setIsPreview(false);
-      setIsUrlPreviewDismissed(true);
       return;
     }
 
     setIsLoading(true);
     setError("");
-    setResult(null);
-    setIsPreview(false);
-    setIsUrlPreviewDismissed(true);
-    setSearchedMarca(nomeMarca);
 
     try {
       const response = await fetch("/api/marcas", {
@@ -148,12 +71,16 @@ export default function Home() {
         );
       }
 
-      setResult({
-        processos: payload.processos ?? [],
-        processosTotal: payload.processosTotal ?? 0,
-        totalPaginas: payload.totalPaginas ?? 1,
-        siteReceipts: payload.siteReceipts ?? [],
+      setConsulta({
+        marca: nomeMarca,
+        response: {
+          processos: payload.processos ?? [],
+          processosTotal: payload.processosTotal ?? 0,
+          totalPaginas: payload.totalPaginas ?? 1,
+          siteReceipts: payload.siteReceipts ?? [],
+        },
       });
+      router.push(`/resultados?marca=${encodeURIComponent(nomeMarca)}`);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -165,331 +92,350 @@ export default function Home() {
     }
   }
 
-  function handlePreview() {
-    setMarca(PREVIEW_MARCA);
-    setSearchedMarca(PREVIEW_MARCA);
-    setResult(PREVIEW_RESULT);
-    setError("");
-    setIsLoading(false);
-    setIsPreview(true);
-    setIsUrlPreviewDismissed(false);
-  }
-
-  function handleClosePreview() {
-    setResult(null);
-    setIsPreview(false);
-    setIsUrlPreviewDismissed(true);
-  }
-
   return (
-    <main className="min-h-screen overflow-hidden">
-      <header className="mx-auto flex min-h-21.5 w-shell max-w-295 items-center justify-between border-b border-[rgba(203,217,208,0.72)] max-compact:min-h-17.5 max-compact:w-shell-mobile">
-        <Link
-          className={`inline-flex items-center gap-2.75 text-[0.92rem] font-bold tracking-[-0.01em] text-ink no-underline ${focusRing}`}
-          href="/"
-          aria-label="Consulta de marcas - início"
-        >
-          <span
-            className="grid size-7.75 place-items-center rounded-mark bg-ink text-[0.78rem] font-extrabold text-[#eef5ef] transform-[rotate(-8deg)]"
-            aria-hidden="true"
-          >
-            F
-          </span>
-          <span>Flavio Bolsonaro Marcas</span>
-        </Link>
-        <span className="inline-flex items-center gap-2 text-[0.73rem] font-bold tracking-[0.04em] text-muted uppercase max-compact:hidden">
-          <span
-            className="size-1.75 rounded-full bg-positive shadow-source-dot"
-            aria-hidden="true"
-          />
-          Pesquisa baseada no INPI
-        </span>
-      </header>
+    <main id="top" className="min-h-screen overflow-hidden bg-background">
+      <ConsultaHeader />
 
-      <div className="mx-auto w-shell max-w-295 pb-23.5 pt-20.5 max-compact:pb-18 max-compact:pt-6 max-compact:w-shell-mobile">
+      <div className="mx-auto w-shell max-w-295">
         <section
-          className="grid grid-cols-hero items-center gap-hero max-tablet:grid-cols-1 max-tablet:gap-12"
+          className="grid grid-cols-hero items-center gap-hero pb-20 pt-18 max-tablet:grid-cols-1 max-tablet:gap-12 max-compact:pb-14 max-compact:pt-12"
           aria-labelledby="page-title"
         >
-          <div className="max-w-157.5 max-tablet:max-w-175">
-            <p className={eyebrow}>Consulta pública de registros</p>
+          <div className="max-w-145">
+            <div className="mb-6 flex flex-wrap items-center gap-2.5 text-[0.68rem] font-extrabold tracking-[0.12em] uppercase">
+              <span className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-2 text-accent-dark">
+                <span className="size-1.75 rounded-full bg-accent" aria-hidden="true" />
+                Marca Certa
+              </span>
+              <span className="text-muted">Registro de marcas online</span>
+            </div>
             <h1
               id="page-title"
-              className="m-0 max-w-165 text-[clamp(2.7rem,5vw,5.25rem)] font-bold leading-[0.98] tracking-[-0.065em] text-ink"
+              className="m-0 max-w-145 text-[clamp(2.85rem,6vw,5.75rem)] font-extrabold leading-[0.96] tracking-[-0.075em] text-ink"
             >
-              Descubra grátis agora se a sua marca está disponível.
+              Proteja a marca <span className="text-accent">que você criou.</span>
             </h1>
-            <p className="mt-7 max-w-130 text-[1.04rem] leading-[1.7] text-ink-soft">
-              Pesquise uma marca no banco de processos do INPI com uma busca
-              ampla e direta. Encontre registros, pedidos e situações
-              relacionadas.
+            <p className="mt-7 max-w-125 text-[1.06rem] leading-[1.7] text-ink-soft">
+              Pesquise, registre e acompanhe sua marca em uma jornada digital,
+              clara e descomplicada.
             </p>
-            <div
-              className="mt-8.5 flex flex-wrap gap-x-5.5 gap-y-3.75"
-              aria-label="Detalhes da consulta"
-            >
-              <span className={note}>Até 100 resultados</span>
-              <span className={note}>Sem cadastro</span>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <a
+                className={`inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-ink px-5 text-[0.82rem] font-extrabold text-white no-underline transition-[background,transform] duration-160 ease-out hover:-translate-y-px hover:bg-ink-soft ${focusRing}`}
+                href={registrationCtaUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Quero registrar minha marca
+                <span aria-hidden="true">↗</span>
+              </a>
+              <a
+                className={`inline-flex min-h-13 items-center gap-2 rounded-xl px-3 text-[0.82rem] font-extrabold text-ink-soft no-underline transition-colors hover:text-accent-dark ${focusRing}`}
+                href="#como-funciona"
+              >
+                Como funciona
+                <span aria-hidden="true">↓</span>
+              </a>
+            </div>
+            <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3" aria-label="Diferenciais">
+              <CheckItem>Clareza em cada etapa</CheckItem>
+              <CheckItem>Processo digital</CheckItem>
             </div>
           </div>
 
-          <div className="relative rounded-card border border-[rgba(203,217,208,0.9)] bg-[rgba(255,255,255,0.86)] p-card shadow-site before:absolute before:-top-3 before:right-7 before:h-6 before:w-18 before:rounded-tape before:bg-[#e8b38e] before:content-[''] before:opacity-[0.72] before:transform-[rotate(4deg)] max-tablet:max-w-155 max-compact:rounded-panel max-compact:px-5 max-compact:pb-5.5 max-compact:pt-6.25">
-            <div className={eyebrow}>Comece sua pesquisa</div>
-            <h2 className="m-0 max-w-85 text-[clamp(1.65rem,3vw,2.25rem)] font-normal leading-[1.05] tracking-[-0.045em] text-ink">
-              Qual marca você quer consultar?
-            </h2>
-            <p className="mb-6.75 mt-3.75 text-[0.91rem] leading-[1.6] text-muted">
-              Digite o nome ou parte dele. A busca radical também encontra
-              variações que contenham o termo informado.
-            </p>
-
-            <form onSubmit={handleSubmit}>
-              <label
-                className="mb-2.25 block text-[0.78rem] font-extrabold text-ink"
-                htmlFor="marca"
-              >
-                Nome da marca
-              </label>
-              <div className="relative">
-                <span
-                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-[54%] text-[1.6rem] leading-none text-accent-dark"
-                  aria-hidden="true"
-                >
-                  ⌕
+          <section
+            id="diagnostico"
+            className="relative overflow-hidden rounded-card border border-line bg-surface p-card shadow-site max-tablet:max-w-155 max-compact:rounded-panel max-compact:px-5 max-compact:pb-5.5 max-compact:pt-6.25"
+            aria-labelledby="diagnostic-title"
+          >
+            <div className="pointer-events-none absolute -right-12 -top-15 size-42 rounded-full border-[1.2rem] border-accent-soft opacity-90" aria-hidden="true" />
+            <div className="relative">
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <p className="m-0 text-[0.7rem] font-extrabold tracking-[0.14em] text-accent-dark uppercase">
+                  Diagnóstico gratuito
+                </p>
+                <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-soft px-2.5 py-1.5 text-[0.64rem] font-extrabold tracking-[0.08em] text-ink-soft uppercase">
+                  <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
+                  Etapa 01
                 </span>
+              </div>
+              <h2
+                id="diagnostic-title"
+                className="m-0 max-w-95 text-[clamp(1.8rem,3.5vw,2.55rem)] font-extrabold leading-[1.02] tracking-[-0.055em] text-ink"
+              >
+                Sua marca está realmente disponível para registro?
+              </h2>
+              <p className="mb-7 mt-4 max-w-105 text-[0.9rem] leading-[1.65] text-muted">
+                Faça uma pesquisa preliminar nos processos públicos de marcas e
+                descubra os próximos passos.
+              </p>
+
+              <form onSubmit={handleSubmit}>
+                <label
+                  className="mb-2.25 block text-[0.76rem] font-extrabold text-ink"
+                  htmlFor="marca"
+                >
+                  Nome da marca
+                </label>
                 <input
-                  className="min-h-14 w-full rounded-xl border border-line-strong bg-surface-soft pl-11.25 pr-4 text-[0.98rem] text-ink outline-none transition-[border-color,box-shadow,background] duration-160 ease-out placeholder:text-[#9ba9a0] focus:border-accent focus:bg-surface focus:shadow-input-focus"
+                  className="min-h-14 w-full rounded-xl border border-line-strong bg-surface-soft px-4 text-[0.96rem] text-ink outline-none transition-[border-color,box-shadow,background] duration-160 ease-out placeholder:text-[#91a0aa] focus:border-accent focus:bg-surface focus:shadow-input-focus"
                   id="marca"
                   name="marca"
                   type="text"
-                  value={showPreview ? marca || PREVIEW_MARCA : marca}
+                  value={marca}
                   onChange={(event) => setMarca(event.target.value)}
                   placeholder="Ex.: Horizonte"
                   autoComplete="off"
                   maxLength={120}
                   required
                 />
+                <button
+                  className={`mt-3 flex min-h-14 w-full cursor-pointer items-center justify-between rounded-xl border-0 bg-accent px-4.25 pl-4.75 text-[0.84rem] font-extrabold text-ink transition-[background,transform,color] duration-160 ease-out [&:not(:disabled):hover]:-translate-y-px [&:not(:disabled):hover]:bg-accent-dark [&:not(:disabled):hover]:text-white disabled:cursor-wait disabled:opacity-70 ${focusRing}`}
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Consultando..." : "Consultar minha marca"}
+                  <span className="text-[1.2rem] font-normal leading-none" aria-hidden="true">
+                    ✓
+                  </span>
+                </button>
+              </form>
+
+              <div className="mt-5 border-t border-line pt-4.5">
+                <div className="flex flex-wrap gap-x-5 gap-y-2.5">
+                  <span className={note}>Sem cadastro</span>
+                  <span className={note}>Pesquisa preliminar</span>
+                </div>
+                <Link
+                  className={`mt-4 inline-flex text-[0.74rem] font-extrabold text-ink-soft no-underline transition-colors hover:text-accent-dark hover:underline hover:underline-offset-3 ${focusRing}`}
+                  href="/resultados?preview=resultados"
+                >
+                  Ver um exemplo de resultado <span className="ml-1" aria-hidden="true">↗</span>
+                </Link>
               </div>
-              <button
-                className={`mt-3 flex min-h-14 w-full cursor-pointer items-center justify-between rounded-xl border-0 bg-accent px-4.25 pl-4.75 text-[0.86rem] font-extrabold text-[#fffaf5] transition-[background,transform] duration-160 ease-out [&:not(:disabled):hover]:-translate-y-px [&:not(:disabled):hover]:bg-accent-dark disabled:cursor-wait disabled:opacity-70 ${focusRing}`}
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? "Consultando..." : "Consultar marca"}
-                <span className="text-[1.3rem] font-normal leading-none" aria-hidden="true">
-                  →
-                </span>
-              </button>
-            </form>
-            <div className="mt-5 border-t border-line pt-4.5">
-              <button
-                className={`w-full cursor-pointer rounded-xl border border-line-strong bg-surface px-4 py-3 text-[0.8rem] font-extrabold text-ink-soft transition-[border-color,background,color] duration-160 ease-out hover:border-accent hover:bg-accent-soft hover:text-accent-dark ${focusRing}`}
-                type="button"
-                onClick={handlePreview}
-              >
-                Visualizar resultado de exemplo
-              </button>
-              <p className="mb-0 mt-2.5 text-center text-[0.72rem] leading-[1.45] text-muted">
-                Dados fictícios para editar o visual. Nenhuma requisição será enviada.
-              </p>
+
+              <div className="mt-4 min-h-8" aria-live="polite">
+                {isLoading && (
+                  <div className="flex items-center gap-3 text-[0.78rem] text-ink-soft" role="status">
+                    <span
+                      className="size-4 animate-[spin_800ms_linear_infinite] rounded-full border-2 border-line-strong border-t-accent"
+                      aria-hidden="true"
+                    />
+                    Consultando os registros de “{marca.trim()}”...
+                  </div>
+                )}
+
+                {error && (
+                  <div
+                    className="flex items-start gap-3 rounded-alert border border-[#f0c9b9] bg-[#fff3ed] px-4 py-3.5 text-ink"
+                    role="alert"
+                  >
+                    <span
+                      className="grid size-5.5 shrink-0 place-items-center rounded-full bg-[#d97045] text-[0.7rem] font-extrabold text-white"
+                      aria-hidden="true"
+                    >
+                      !
+                    </span>
+                    <p className="m-0 text-[0.78rem] leading-[1.45] text-ink-soft">{error}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section className="grid grid-cols-3 border-y border-line py-6 max-tablet:grid-cols-1 max-tablet:gap-5 max-compact:py-5" aria-label="A jornada da Marca Certa">
+          <div className="flex items-center gap-3 border-r border-line px-6 first:pl-0 max-tablet:border-r-0 max-tablet:border-b max-tablet:pb-5 max-compact:px-0">
+            <span className="text-[1.45rem] font-extrabold tracking-[-0.08em] text-accent">01</span>
+            <div>
+              <strong className="block text-[0.78rem] text-ink">Diagnóstico</strong>
+              <span className="text-[0.72rem] text-muted">Comece pela pesquisa</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 border-r border-line px-6 max-tablet:border-r-0 max-tablet:border-b max-tablet:pb-5 max-compact:px-0">
+            <span className="text-[1.45rem] font-extrabold tracking-[-0.08em] text-accent">02</span>
+            <div>
+              <strong className="block text-[0.78rem] text-ink">Registro</strong>
+              <span className="text-[0.72rem] text-muted">Proteja o que é seu</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-6 last:pr-0 max-compact:px-0">
+            <span className="text-[1.45rem] font-extrabold tracking-[-0.08em] text-accent">03</span>
+            <div>
+              <strong className="block text-[0.78rem] text-ink">Monitoramento</strong>
+              <span className="text-[0.72rem] text-muted">Continue acompanhado</span>
             </div>
           </div>
         </section>
 
-        <section
-          className="mt-23 min-h-37.5 max-compact:mt-17.5"
-          aria-labelledby="results-title"
-        >
-          {isLoading && (
-            <div className="flex items-center gap-3.25 text-[0.88rem] text-ink-soft" role="status">
-              <span
-                className="size-4.5 animate-[spin_800ms_linear_infinite] rounded-full border-2 border-line-strong border-t-accent"
-                aria-hidden="true"
-              />
-              Consultando os registros de “{displayedMarca}”...
-            </div>
-          )}
+        <section id="servicos" className="py-24 max-compact:py-17.5" aria-labelledby="services-title">
+          <div className="max-w-145">
+            <p className={eyebrow}>Uma jornada completa</p>
+            <h2 id="services-title" className="m-0 text-[clamp(2rem,4vw,3.6rem)] font-extrabold leading-[1] tracking-[-0.065em] text-ink">
+              Da primeira busca à proteção contínua.
+            </h2>
+            <p className="mb-0 mt-5 max-w-125 text-[0.98rem] leading-[1.7] text-muted">
+              Cada etapa tem um objetivo claro para você tomar decisões com mais
+              segurança e menos complicação.
+            </p>
+          </div>
 
-          {error && (
-            <div
-              className="flex max-w-180 items-start gap-3.5 rounded-alert border border-[#f1cfc0] bg-accent-soft px-5 py-4.5 text-ink"
-              role="alert"
-            >
-              <span
-                className="grid size-6 shrink-0 place-items-center rounded-full bg-accent text-[0.8rem] font-extrabold text-white"
-                aria-hidden="true"
-              >
-                !
+          <div className="mt-12 grid grid-cols-3 gap-5 max-tablet:grid-cols-1">
+            <article className="rounded-card border border-line bg-surface p-7 shadow-results max-compact:rounded-panel max-compact:p-5.5">
+              <ServiceIcon>⌕</ServiceIcon>
+              <p className="mb-3 mt-7 text-[0.68rem] font-extrabold tracking-[0.14em] text-accent-dark uppercase">Produto 01</p>
+              <h3 className="m-0 text-[1.45rem] font-extrabold tracking-[-0.045em] text-ink">Diagnóstico de Marca</h3>
+              <p className="mb-0 mt-3 text-[0.86rem] leading-[1.65] text-muted">
+                Uma pesquisa inicial para entender se já existem processos
+                semelhantes à sua marca.
+              </p>
+              <a className={`mt-7 inline-flex text-[0.78rem] font-extrabold text-accent-dark no-underline hover:underline hover:underline-offset-3 ${focusRing}`} href="#diagnostico">
+                Fazer diagnóstico <span className="ml-1" aria-hidden="true">→</span>
+              </a>
+            </article>
+
+            <article className="rounded-card bg-ink p-7 text-white shadow-site max-compact:rounded-panel max-compact:p-5.5">
+              <span className="grid size-11 place-items-center rounded-2xl bg-accent text-[1.2rem] font-extrabold text-ink" aria-hidden="true">✓</span>
+              <p className="mb-3 mt-7 text-[0.68rem] font-extrabold tracking-[0.14em] text-accent uppercase">Produto 02 · Principal</p>
+              <h3 className="m-0 text-[1.45rem] font-extrabold tracking-[-0.045em]">Registro de Marca</h3>
+              <p className="mb-0 mt-3 text-[0.86rem] leading-[1.65] text-[#d8e5ec]">
+                Transforme a pesquisa em um processo acompanhado para proteger
+                o nome que faz seu negócio ser único.
+              </p>
+              <a className={`mt-7 inline-flex text-[0.78rem] font-extrabold text-accent no-underline hover:text-white hover:underline hover:underline-offset-3 ${focusRing}`} href={registrationCtaUrl} target="_blank" rel="noreferrer">
+                Quero registrar minha marca <span className="ml-1" aria-hidden="true">↗</span>
+              </a>
+            </article>
+
+            <article className="rounded-card border border-line bg-surface p-7 shadow-results max-compact:rounded-panel max-compact:p-5.5">
+              <ServiceIcon>◷</ServiceIcon>
+              <p className="mb-3 mt-7 text-[0.68rem] font-extrabold tracking-[0.14em] text-accent-dark uppercase">Produto 03 · Em breve</p>
+              <h3 className="m-0 text-[1.45rem] font-extrabold tracking-[-0.045em] text-ink">Gestão e Monitoramento</h3>
+              <p className="mb-0 mt-3 text-[0.86rem] leading-[1.65] text-muted">
+                Continue acompanhando possíveis pedidos semelhantes depois que
+                sua marca estiver registrada.
+              </p>
+              <span className="mt-7 inline-flex items-center gap-2 text-[0.75rem] font-extrabold text-muted">
+                <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
+                Próxima etapa da sua proteção
               </span>
-              <div>
-                <strong className="block text-[0.9rem]">Não foi possível concluir a consulta</strong>
-                <p className="mb-0 mt-1.25 text-[0.83rem] leading-normal text-ink-soft">
-                  {error}
-                </p>
-              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="como-funciona" className="rounded-card bg-ink px-10 py-14 text-white max-tablet:px-7 max-compact:rounded-panel max-compact:px-5.5 max-compact:py-10" aria-labelledby="process-title">
+          <div className="flex items-end justify-between gap-8 max-tablet:block">
+            <div className="max-w-125">
+              <p className="mb-4 text-[0.7rem] font-extrabold tracking-[0.15em] text-accent uppercase">Como funciona</p>
+              <h2 id="process-title" className="m-0 text-[clamp(2rem,4vw,3.45rem)] font-extrabold leading-[1] tracking-[-0.065em]">
+                Clareza em cada etapa do processo.
+              </h2>
             </div>
-          )}
+            <p className="mb-1 max-w-80 text-[0.86rem] leading-[1.65] text-[#c8dbe4] max-tablet:mt-5">
+              Você acompanha o que está acontecendo e entende qual é o próximo
+              passo.
+            </p>
+          </div>
 
-          {!isLoading && !error && displayedResult && (
-            <>
-              {showPreview && (
-                <div className="mb-5 flex items-center justify-between gap-4 rounded-alert border border-[#e8d2bd] bg-[#fff8f0] px-4 py-3 text-[0.78rem] text-ink-soft max-compact:items-start max-compact:flex-col">
-                  <p className="m-0">
-                    <strong className="text-accent-dark">Prévia local:</strong>{" "}
-                    estes dados são fictícios e não vieram da API do INPI.
-                  </p>
-                  <button
-                    className={`shrink-0 cursor-pointer border-0 bg-transparent p-0 font-extrabold text-accent-dark underline underline-offset-3 hover:text-accent ${focusRing}`}
-                    type="button"
-                    onClick={handleClosePreview}
-                  >
-                    Ocultar exemplo
-                  </button>
-                </div>
-              )}
-              <div className="mb-6 flex items-end justify-between gap-6 max-compact:block">
-                <div>
-                  <p className={`${eyebrow} mb-3`}>Resultado da pesquisa</p>
-                  <h2
-                    id="results-title"
-                    className="m-0 max-w-180 text-[clamp(1.55rem,3vw,2.5rem)] font-normal leading-[1.05] tracking-[-0.05em] text-ink"
-                  >
-                    {displayedResult.processos.length === 0
-                      ? `Nenhum processo encontrado para “${displayedMarca}”`
-                      : `Processos relacionados a “${displayedMarca}”`}
-                  </h2>
-                </div>
-                <div className="flex shrink-0 items-baseline gap-1.75 pb-1 text-[0.76rem] text-muted uppercase max-compact:mt-4.5">
-                  <strong className="text-[2rem] leading-none tracking-[-0.06em] text-accent-dark">
-                    {displayedResult.processos.length}
-                  </strong>
-                  <span>
-                    resultado{displayedResult.processos.length === 1 ? "" : "s"}
-                  </span>
-                </div>
+          <div className="mt-12 grid grid-cols-4 gap-5 max-tablet:grid-cols-2 max-compact:grid-cols-1">
+            {[
+              ["01", "Pesquise", "Comece com uma consulta preliminar da sua marca."],
+              ["02", "Entenda", "Veja processos relacionados e pontos de atenção."],
+              ["03", "Registre", "Escolha o melhor caminho para iniciar a proteção."],
+              ["04", "Acompanhe", "Continue perto da sua marca em cada momento."],
+            ].map(([number, title, description]) => (
+              <div className="border-t border-[rgba(255,255,255,0.18)] pt-5" key={number}>
+                <span className="text-[0.72rem] font-extrabold tracking-[0.12em] text-accent">{number}</span>
+                <h3 className="mb-0 mt-4 text-[1.05rem] font-extrabold">{title}</h3>
+                <p className="mb-0 mt-2 text-[0.78rem] leading-[1.6] text-[#c8dbe4]">{description}</p>
               </div>
+            ))}
+          </div>
+        </section>
 
-              {displayedResult.processos.length === 0 ? (
-                <div className="max-w-155 pb-2.5 pt-10.5">
-                  <span className="mb-4 block text-[2.4rem] leading-none text-accent" aria-hidden="true">
-                    ◌
-                  </span>
-                  <h3 className="m-0 text-[1.25rem] font-normal tracking-[-0.03em] text-ink">
-                    Tente uma nova variação
-                  </h3>
-                  <p className="mb-0 mt-2.25 max-w-117.5 text-[0.88rem] leading-[1.6] text-muted">
-                    Não encontramos processos para esse termo na primeira
-                    página da pesquisa. Experimente uma grafia mais curta.
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-hidden rounded-panel border border-line bg-surface shadow-results">
-                  <div
-                    className={`overflow-x-auto ${focusRing} focus-visible:-outline-offset-3`}
-                    tabIndex={0}
-                  >
-                    <table className="w-full min-w-245 border-collapse text-left">
-                      <caption className="sr-only">
-                        Processos de marcas relacionados à busca por {displayedMarca}
-                      </caption>
-                      <thead>
-                        <tr>
-                          <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-extrabold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
-                            Processo
-                          </th>
-                          <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-extrabold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
-                            Marca
-                          </th>
-                          <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-extrabold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
-                            Titular
-                          </th>
-                          <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-extrabold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
-                            Situação
-                          </th>
-                          <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-extrabold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
-                            Classe
-                          </th>
-                          <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-extrabold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
-                            Prioridade
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {displayedResult.processos.map((processo, index) => (
-                          <tr
-                            className="hover:bg-[#fbfcfa] last:[&>td]:border-b-0"
-                            key={`${processo.numero ?? "processo"}-${processo.classe ?? "classe"}-${index}`}
-                          >
-                            <td className="border-b border-[#edf2ee] px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
-                              <strong className="block text-[0.82rem] tracking-[0.02em] text-ink">
-                                {processo.numero || "Não informado"}
-                              </strong>
-                              <span className="mt-1.25 block text-[0.71rem] text-muted">
-                                {processo.registro || "Registro não informado"}
-                              </span>
-                            </td>
-                            <td className="border-b border-[#edf2ee] px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
-                              <strong className="block text-[0.82rem] text-ink">
-                                {processo.marca || "Não informada"}
-                              </strong>
-                              <span className="mt-1.25 block text-[0.71rem] text-muted">
-                                {processo.tipo || "Tipo não informado"}
-                              </span>
-                            </td>
-                            <td className="border-b border-[#edf2ee] px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
-                              {processo.titular || "Não informado"}
-                            </td>
-                            <td className="border-b border-[#edf2ee] px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
-                              <span className={`${statusPill} ${getStatusTone(processo.situacao)}`}>
-                                {processo.situacao || "Não informada"}
-                              </span>
-                            </td>
-                            <td className="border-b border-[#edf2ee] px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
-                              {processo.classe || "Não informada"}
-                            </td>
-                            <td className="border-b border-[#edf2ee] px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
-                              {processo.prioridade || "Não informada"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="flex items-center justify-between gap-4.5 border-t border-line px-4.5 py-4.25 text-[0.72rem] leading-[1.45] text-muted max-compact:items-start max-compact:flex-col">
-                    <span>
-                      Primeira página da consulta · até 100 resultados retornados
-                    </span>
-                    {displayedResult.siteReceipts[0] && (
-                      <a
-                        className={`whitespace-nowrap font-extrabold text-accent-dark no-underline hover:underline hover:underline-offset-3 max-compact:whitespace-normal ${focusRing}`}
-                        href={displayedResult.siteReceipts[0]}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Abrir comprovante da consulta <span aria-hidden="true">↗</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+        <section id="faq" className="grid grid-cols-[0.78fr_1.22fr] gap-18 py-24 max-tablet:grid-cols-1 max-tablet:gap-10 max-compact:py-17.5" aria-labelledby="faq-title">
+          <div>
+            <p className={eyebrow}>Perguntas frequentes</p>
+            <h2 id="faq-title" className="m-0 max-w-105 text-[clamp(2rem,4vw,3.3rem)] font-extrabold leading-[1] tracking-[-0.065em] text-ink">
+              Antes de proteger, é normal ter dúvidas.
+            </h2>
+            <p className="mb-0 mt-5 max-w-95 text-[0.9rem] leading-[1.65] text-muted">
+              Reunimos as respostas mais importantes para você começar com
+              tranquilidade.
+            </p>
+          </div>
+          <div className="divide-y divide-line border-y border-line">
+            <details className="group py-5">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 text-[0.95rem] font-extrabold text-ink [&::-webkit-details-marker]:hidden">
+                A consulta garante que minha marca será registrada?
+                <span className="text-[1.35rem] font-normal text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
+              </summary>
+              <p className="mb-0 mt-3 max-w-150 text-[0.84rem] leading-[1.65] text-muted">
+                Não. A consulta é um diagnóstico preliminar. A análise completa
+                considera classes, similaridades e outros fatores do processo.
+              </p>
+            </details>
+            <details className="group py-5">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 text-[0.95rem] font-extrabold text-ink [&::-webkit-details-marker]:hidden">
+                Por que devo pesquisar antes de registrar?
+                <span className="text-[1.35rem] font-normal text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
+              </summary>
+              <p className="mb-0 mt-3 max-w-150 text-[0.84rem] leading-[1.65] text-muted">
+                A pesquisa ajuda a identificar processos semelhantes e a tomar
+                uma decisão mais informada antes de investir no pedido.
+              </p>
+            </details>
+            <details className="group py-5">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 text-[0.95rem] font-extrabold text-ink [&::-webkit-details-marker]:hidden">
+                O registro serve para qualquer tipo de negócio?
+                <span className="text-[1.35rem] font-normal text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
+              </summary>
+              <p className="mb-0 mt-3 max-w-150 text-[0.84rem] leading-[1.65] text-muted">
+                A estratégia depende da atividade, da marca e das classes que
+                representam o negócio. O diagnóstico é o ponto de partida.
+              </p>
+            </details>
+            <details className="group py-5">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 text-[0.95rem] font-extrabold text-ink [&::-webkit-details-marker]:hidden">
+                Como funciona o monitoramento?
+                <span className="text-[1.35rem] font-normal text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
+              </summary>
+              <p className="mb-0 mt-3 max-w-150 text-[0.84rem] leading-[1.65] text-muted">
+                Esse serviço está sendo planejado para acompanhar novos pedidos
+                semelhantes depois do registro da marca.
+              </p>
+            </details>
+          </div>
+        </section>
 
-          {!isLoading && !error && !displayedResult && (
-            <div className="flex items-center gap-3.25 text-[0.88rem] text-muted">
-              <span className="h-px w-9.5 bg-line-strong" aria-hidden="true" />
-              <p className="m-0">Os resultados da sua consulta aparecerão aqui.</p>
+        <section className="mb-24 overflow-hidden rounded-card bg-accent px-10 py-12 max-tablet:px-7 max-compact:mb-17.5 max-compact:rounded-panel max-compact:px-5.5" aria-labelledby="final-cta-title">
+          <div className="flex items-center justify-between gap-8 max-tablet:block">
+            <div className="max-w-130">
+              <p className="mb-4 text-[0.7rem] font-extrabold tracking-[0.15em] text-ink uppercase">Próximo passo</p>
+              <h2 id="final-cta-title" className="m-0 text-[clamp(2rem,4vw,3.35rem)] font-extrabold leading-[1] tracking-[-0.065em] text-ink">
+                Sua ideia merece um lugar seguro.
+              </h2>
+              <p className="mb-0 mt-4 max-w-115 text-[0.9rem] leading-[1.65] text-[#214d5d]">
+                Comece entendendo o cenário da sua marca e avance com mais
+                clareza.
+              </p>
             </div>
-          )}
+            <div className="mt-7 shrink-0">
+              <a
+                className={`inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-ink px-5 text-[0.82rem] font-extrabold text-white no-underline transition-[background,transform] duration-160 ease-out hover:-translate-y-px hover:bg-ink-soft ${focusRing}`}
+                href={registrationCtaUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Começar meu registro
+                <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </div>
         </section>
       </div>
 
-      <footer className="mx-auto flex w-shell max-w-295 justify-between gap-5 border-t border-[rgba(203,217,208,0.72)] pb-8.5 pt-5 text-[0.69rem] leading-normal text-muted max-compact:items-start max-compact:flex-col max-compact:w-shell-mobile">
-        <span className="font-extrabold text-ink-soft">Consulta de marcas</span>
-        <span>
-          Os dados são informativos e não substituem uma análise especializada.
-        </span>
-      </footer>
+      <ConsultaFooter />
     </main>
   );
 }

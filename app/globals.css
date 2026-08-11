@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f1f4ef;
+  --background: #fafaf7;
   --surface: #ffffff;
-  --surface-soft: #f7f9f6;
-  --ink: #173a30;
-  --ink-soft: #476057;
-  --muted: #718078;
-  --line: #dce6df;
-  --line-strong: #cbd9d0;
-  --accent: #c86435;
-  --accent-dark: #a84e27;
-  --accent-soft: #fff0e8;
-  --positive: #277454;
-  --positive-soft: #e7f5ed;
-  --warning: #93651f;
-  --warning-soft: #fff5df;
-  --shadow: 0 1.125rem 3.125rem rgba(29, 67, 53, 0.08);
+  --surface-soft: #f1f7f4;
+  --ink: #173b57;
+  --ink-soft: #3f5d73;
+  --muted: #6c7f8d;
+  --line: #dce8e5;
+  --line-strong: #c4d8d2;
+  --accent: #21b573;
+  --accent-dark: #128554;
+  --accent-soft: #e5f7ee;
+  --positive: #128554;
+  --positive-soft: #e5f7ee;
+  --warning: #9a681c;
+  --warning-soft: #fff4db;
+  --shadow: 0 1.5rem 4rem rgba(23, 59, 87, 0.1);
 }
 
 @theme inline {
@@ -36,11 +36,11 @@
   --color-positive-soft: var(--positive-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
-  --font-sans: Arial, Helvetica, sans-serif;
+  --font-sans: "Manrope", "Segoe UI", Arial, sans-serif;
   --shadow-site: var(--shadow);
   --shadow-source-dot: 0 0 0 0.25rem var(--positive-soft);
-  --shadow-input-focus: 0 0 0 0.25rem rgba(200, 100, 53, 0.13);
-  --shadow-results: 0 0.75rem 2.1875rem rgba(29, 67, 53, 0.05);
+  --shadow-input-focus: 0 0 0 0.25rem rgba(33, 181, 115, 0.16);
+  --shadow-results: 0 0.75rem 2.1875rem rgba(23, 59, 87, 0.07);
   --radius-mark: 0.625rem;
   --radius-status: 0.4375rem;
   --radius-alert: 0.875rem;
@@ -70,10 +70,10 @@
   body {
     margin: 0;
     background:
-      radial-gradient(circle at 92% 2%, rgba(197, 224, 210, 0.62), transparent 28rem),
+      radial-gradient(circle at 100% 0%, rgba(33, 181, 115, 0.09), transparent 29rem),
       var(--background);
     color: var(--ink);
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: "Manrope", "Segoe UI", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -89,6 +89,11 @@
 
   a {
     color: inherit;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--ink);
   }
 }
 
