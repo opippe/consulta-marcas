@@ -21,6 +21,11 @@ npm run dev
 
 Abra `http://localhost:3000` no navegador e pesquise pelo nome da marca.
 
+Para editar os estilos da área de resultados sem consumir requisições da API,
+clique em `Visualizar resultado de exemplo`. Essa prévia usa dados fictícios
+apenas no navegador. Também é possível abrir diretamente
+`http://localhost:3000/?preview=resultados`.
+
 Para validar a versão de produção local:
 
 ```bash

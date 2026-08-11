@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-async function render() {
+async function render(path = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
-    new Request("http://localhost/", {
+    new Request(`http://localhost${path}`, {
       headers: { accept: "text/html" },
     }),
     {
@@ -29,8 +29,18 @@ test("server-renders the marca consultation page", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>Consulta de marcas \| INPI<\/title>/i);
-  assert.match(html, /Veja o que já existe antes de dar nome/i);
+  assert.match(html, /Descubra grátis agora se a sua marca está disponível/i);
   assert.match(html, /Nome da marca/i);
   assert.match(html, /Consultar marca/i);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Starter Project/i);
+});
+
+test("server-renders the local result preview", async () => {
+  const response = await render("/?preview=resultados");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /Prévia local/i);
+  assert.match(html, /925847316/);
+  assert.doesNotMatch(html, /Os resultados da sua consulta aparecerão aqui\./i);
 });
