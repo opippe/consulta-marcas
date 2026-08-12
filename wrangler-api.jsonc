@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "consulta-marcas-api",
+  "main": "worker-api/index.ts",
+  "compatibility_date": "2026-08-12",
+  "workers_dev": true,
+  "vars": {
+    "CORS_ORIGIN": "https://opippe.github.io"
+  }
+}
