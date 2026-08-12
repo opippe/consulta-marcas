@@ -85,6 +85,12 @@
     scroll-behavior: smooth;
   }
 
+  @media (hover: none), (pointer: coarse) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
   body {
     margin: 0;
     background:

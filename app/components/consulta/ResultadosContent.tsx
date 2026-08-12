@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { registrationCtaUrl } from "@/app/consulta/brand";
 import { sitePath } from "@/app/consulta/paths";
 import type { ConsultaResponse } from "@/app/consulta/types";
@@ -187,7 +188,7 @@ export default function ResultadosContent({
                 target="_blank"
                 rel="noreferrer"
               >
-                Abrir comprovante da consulta <span aria-hidden="true">↗</span>
+                Abrir comprovante da consulta <ArrowUpRight className="ml-1 align-[-0.15em]" aria-hidden="true" size={14} strokeWidth={2.2} />
               </a>
             )}
           </div>
@@ -214,7 +215,7 @@ export default function ResultadosContent({
           rel="noreferrer"
         >
           Quero registrar minha marca
-          <span aria-hidden="true">↗</span>
+          <ArrowUpRight aria-hidden="true" size={15} strokeWidth={2.2} />
         </a>
       </div>
     </section>

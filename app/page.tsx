@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent, ReactNode } from "react";
-import { FileCheck2, Radar, SearchCheck } from "lucide-react";
+import { ArrowUpRight, FileCheck2, Radar, SearchCheck } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -159,7 +159,7 @@ export default function Home() {
                 rel="noreferrer"
               >
                 Quero registrar minha marca
-                <span aria-hidden="true">↗</span>
+                <ArrowUpRight aria-hidden="true" size={16} strokeWidth={2.2} />
               </a>
               <a
                 className={`inline-flex min-h-13 items-center gap-2 rounded-lg border border-line bg-surface px-4 text-[0.82rem] font-bold text-ink-soft no-underline transition-[border-color,color] hover:border-accent-dark hover:text-accent-dark ${focusRing}`}
@@ -234,7 +234,7 @@ export default function Home() {
               </form>
 
               <div className="mt-5 border-t border-line pt-4.5">
-                <div className="flex flex-wrap gap-x-5 gap-y-2.5">
+                <div className="flex flex-wrap gap-x-5">
                   <span className={note}>Sem cadastro</span>
                   <span className={note}>Pesquisa preliminar</span>
                 </div>
@@ -242,7 +242,7 @@ export default function Home() {
                   className={`mt-4 inline-flex text-[0.74rem] font-bold text-ink-soft no-underline transition-colors hover:text-accent-dark hover:underline hover:underline-offset-3 ${focusRing}`}
                   href="/resultados?preview=resultados"
                 >
-                  Ver um exemplo de resultado <span className="ml-1" aria-hidden="true">↗</span>
+                  Ver um exemplo de resultado <ArrowUpRight className="ml-1" aria-hidden="true" size={14} strokeWidth={2.2} />
                 </Link> */} 
               </div>
 
@@ -273,7 +273,7 @@ export default function Home() {
                 )}
               </div>
 
-              <div className="mt-5 pt-4">
+              <div className="">
                 <div
                   className="relative -mx-1 overflow-hidden"
                   aria-label="Fontes oficiais consultadas"
@@ -374,7 +374,7 @@ export default function Home() {
                 o nome que faz seu negócio ser único.
               </p>
               <a className={`mt-7 inline-flex text-[0.78rem] font-bold text-accent no-underline hover:text-white hover:underline hover:underline-offset-3 ${focusRing}`} href={registrationCtaUrl} target="_blank" rel="noreferrer">
-                Quero registrar minha marca <span className="ml-1" aria-hidden="true">↗</span>
+                Quero registrar minha marca <ArrowUpRight className="ml-1" aria-hidden="true" size={15} strokeWidth={2.2} />
               </a>
             </article>
 
@@ -500,7 +500,7 @@ export default function Home() {
                 rel="noreferrer"
               >
                 Começar meu registro
-                <span aria-hidden="true">↗</span>
+                <ArrowUpRight aria-hidden="true" size={16} strokeWidth={2.2} />
               </a>
             </div>
           </div>

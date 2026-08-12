@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { brandName, registrationCtaUrl } from "@/app/consulta/brand";
 import MarcaCertaMark from "@/app/components/consulta/MarcaCertaMark";
 import { sitePath } from "@/app/consulta/paths";
@@ -36,7 +37,7 @@ export default function ConsultaHeader() {
         rel="noreferrer"
       >
         Quero registrar
-        <span aria-hidden="true">↗</span>
+        <ArrowUpRight aria-hidden="true" size={15} strokeWidth={2.2} />
       </a>
     </header>
   );
