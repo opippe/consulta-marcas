@@ -243,7 +243,7 @@ export default function Home() {
                   href="/resultados?preview=resultados"
                 >
                   Ver um exemplo de resultado <span className="ml-1" aria-hidden="true">↗</span>
-                </Link> */}
+                </Link> */} 
               </div>
 
               <div className="mt-4 min-h-8" aria-live="polite">
