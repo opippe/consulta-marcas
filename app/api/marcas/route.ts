@@ -16,8 +16,36 @@ type InfosimplesResponse = {
   }>;
 };
 
-function jsonError(message: string, status: number) {
-  return Response.json({ error: message }, { status });
+function corsHeaders(request: Request) {
+  const configuredOrigin = process.env.CORS_ORIGIN?.trim();
+  const requestOrigin = request.headers.get("Origin");
+  const isAllowed =
+    configuredOrigin === "*" ||
+    (configuredOrigin && requestOrigin === configuredOrigin);
+  const headers = new Headers();
+
+  if (isAllowed) {
+    headers.set(
+      "Access-Control-Allow-Origin",
+      configuredOrigin === "*" ? "*" : requestOrigin ?? configuredOrigin,
+    );
+    headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    headers.set("Access-Control-Allow-Headers", "Content-Type");
+    headers.set("Vary", "Origin");
+  }
+
+  return headers;
+}
+
+function jsonError(request: Request, message: string, status: number) {
+  return Response.json(
+    { error: message },
+    { status, headers: corsHeaders(request) },
+  );
+}
+
+export function OPTIONS(request: Request) {
+  return new Response(null, { status: 204, headers: corsHeaders(request) });
 }
 
 export async function POST(request: Request) {
@@ -29,16 +57,25 @@ export async function POST(request: Request) {
   const marca = typeof candidate === "string" ? candidate.trim() : "";
 
   if (marca.length < 2) {
-    return jsonError("Informe pelo menos 2 caracteres para pesquisar uma marca.", 400);
+    return jsonError(
+      request,
+      "Informe pelo menos 2 caracteres para pesquisar uma marca.",
+      400,
+    );
   }
 
   if (marca.length > 120) {
-    return jsonError("O nome da marca deve ter no máximo 120 caracteres.", 400);
+    return jsonError(
+      request,
+      "O nome da marca deve ter no máximo 120 caracteres.",
+      400,
+    );
   }
 
   const token = process.env.INFOSIMPLES_TOKEN?.trim();
   if (!token) {
     return jsonError(
+      request,
       "O token da Infosimples ainda não foi configurado no arquivo .env.",
       500,
     );
@@ -69,7 +106,11 @@ export async function POST(request: Request) {
     try {
       payload = JSON.parse(responseText) as InfosimplesResponse;
     } catch {
-      return jsonError("A API retornou uma resposta que não pôde ser lida.", 502);
+      return jsonError(
+        request,
+        "A API retornou uma resposta que não pôde ser lida.",
+        502,
+      );
     }
 
     if (!apiResponse.ok || payload.code !== 200) {
@@ -77,22 +118,27 @@ export async function POST(request: Request) {
         .filter(Boolean)
         .join(" ");
       return jsonError(
+        request,
         details || "A API não conseguiu processar essa consulta.",
         502,
       );
     }
 
     const firstResult = payload.data?.[0];
-    return Response.json({
-      processos: firstResult?.processos ?? [],
-      processosTotal: firstResult?.processos_total ?? 0,
-      totalPaginas: firstResult?.total_paginas ?? 1,
-      siteReceipts:
-        payload.site_receipts ?? firstResult?.site_receipts ?? [],
-    });
+    return Response.json(
+      {
+        processos: firstResult?.processos ?? [],
+        processosTotal: firstResult?.processos_total ?? 0,
+        totalPaginas: firstResult?.total_paginas ?? 1,
+        siteReceipts:
+          payload.site_receipts ?? firstResult?.site_receipts ?? [],
+      },
+      { headers: corsHeaders(request) },
+    );
   } catch (error) {
     console.error("Erro ao consultar a API de marcas", error);
     return jsonError(
+      request,
       "Não foi possível acessar a API de marcas. Tente novamente em instantes.",
       502,
     );

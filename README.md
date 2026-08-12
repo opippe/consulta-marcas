@@ -1,6 +1,6 @@
-# Marca Certa
+# Flavio Bolsonaro Marcas
 
-Landing page e diagnóstico preliminar de marcas para a Marca Certa, usando a
+Landing page e diagnóstico preliminar de marcas para a Flavio Bolsonaro Marcas, usando a
 API da Infosimples para pesquisar processos públicos relacionados a marcas.
 
 ## Configuração

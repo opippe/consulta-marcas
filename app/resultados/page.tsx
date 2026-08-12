@@ -6,6 +6,7 @@ import ConsultaFooter from "@/app/components/consulta/ConsultaFooter";
 import ConsultaHeader from "@/app/components/consulta/ConsultaHeader";
 import ResultadosContent from "@/app/components/consulta/ResultadosContent";
 import { useConsulta } from "@/app/consulta/consulta-context";
+import { sitePath } from "@/app/consulta/paths";
 import { PREVIEW_MARCA, PREVIEW_RESULT } from "@/app/consulta/preview";
 import { focusRing } from "@/app/consulta/ui";
 
@@ -20,23 +21,23 @@ export default function ResultadosPage() {
     : consulta?.marca ?? searchParams.get("marca") ?? "";
 
   return (
-    <main className="min-h-screen overflow-hidden">
+    <main className="min-h-screen overflow-x-clip">
       <ConsultaHeader />
 
       <div className="mx-auto w-shell max-w-295 pb-23.5 pt-12 max-compact:pb-18 max-compact:pt-6 max-compact:w-shell-mobile">
         <Link
-          className={`mb-8 inline-flex items-center gap-2 text-[0.78rem] font-extrabold text-accent-dark no-underline hover:underline hover:underline-offset-3 ${focusRing}`}
-          href="/"
+          className={`mb-8 inline-flex items-center gap-2 text-[0.78rem] font-bold text-accent-dark no-underline hover:underline hover:underline-offset-3 ${focusRing}`}
+          href={sitePath("/")}
         >
           <span aria-hidden="true">←</span>
-          Voltar para a Marca Certa
+          Voltar
         </Link>
 
         <ResultadosContent
           marca={marca}
           result={result}
           isPreview={isPreview}
-          onClosePreview={() => router.push("/")}
+          onClosePreview={() => router.push(sitePath("/"))}
         />
       </div>
 

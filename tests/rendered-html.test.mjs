@@ -22,13 +22,13 @@ async function render(path = "/") {
   );
 }
 
-test("server-renders the Marca Certa landing page", async () => {
+test("server-renders the Flavio Bolsonaro Marcas landing page", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Marca Certa \| Registro de marcas<\/title>/i);
+  assert.match(html, /<title>Flavio Bolsonaro Marcas \| Registro de marcas<\/title>/i);
   assert.match(html, /Proteja a marca/i);
   assert.match(html, /que você criou/i);
   assert.match(html, /Diagnóstico gratuito/i);
@@ -56,5 +56,5 @@ test("server-renders the results route without a previous consultation", async (
 
   const html = await response.text();
   assert.match(html, /Esta consulta não está disponível/i);
-  assert.match(html, /Voltar para a Marca Certa/i);
+  assert.match(html, /Voltar para a Flavio Bolsonaro Marcas/i);
 });

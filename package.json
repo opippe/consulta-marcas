@@ -15,9 +15,11 @@
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
+    "lucide-react": "^1.31.0",
     "next": "16.2.6",
     "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react-dom": "19.2.6",
+    "react-icons": "^5.7.0"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
