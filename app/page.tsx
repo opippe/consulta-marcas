@@ -116,7 +116,7 @@ export default function Home() {
   }
 
   return (
-    <main id="top" className="min-h-screen overflow-x-clip bg-background">
+    <main id="top" className="min-h-screen bg-background">
       <ConsultaHeader />
 
       <div className="mx-auto w-shell max-w-295">
