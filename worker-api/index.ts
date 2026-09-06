@@ -1,201 +1,52 @@
-const INFOSIMPLES_ENDPOINT =
-  "https://api.infosimples.com/api/v2/consultas/inpi/marcas";
-
-type Processo = {
-  numero?: string;
-  prioridade?: string;
-  tipo?: string;
-  marca?: string;
-  registro?: string;
-  situacao?: string;
-  titular?: string;
-  classe?: string;
-};
-
-type InfosimplesResponse = {
-  code?: number;
-  code_message?: string;
-  errors?: string[];
-  site_receipts?: string[];
-  data?: Array<{
-    processos?: Processo[];
-    processos_total?: number;
-    total_paginas?: number;
-    site_receipts?: string[];
-  }>;
-};
-
 interface Env {
   CORS_ORIGIN: string;
-  INFOSIMPLES_TOKEN: string;
+  OPERATIONS_API_URL?: string;
 }
 
 function corsHeaders(request: Request, env: Env) {
   const configuredOrigin = env.CORS_ORIGIN?.trim();
   const requestOrigin = request.headers.get("Origin");
-  const isAllowed =
-    configuredOrigin === "*" ||
-    Boolean(configuredOrigin && requestOrigin === configuredOrigin);
   const headers = new Headers({ "Cache-Control": "no-store" });
-
-  if (isAllowed) {
-    headers.set(
-      "Access-Control-Allow-Origin",
-      configuredOrigin === "*" ? "*" : configuredOrigin,
-    );
-    headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  if (configuredOrigin === "*" || (configuredOrigin && requestOrigin === configuredOrigin)) {
+    headers.set("Access-Control-Allow-Origin", configuredOrigin);
+    headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     headers.set("Access-Control-Allow-Headers", "Content-Type");
-    headers.set("Access-Control-Max-Age", "86400");
     headers.set("Vary", "Origin");
   }
-
   return headers;
 }
 
-function jsonResponse(
-  request: Request,
-  env: Env,
-  body: unknown,
-  status = 200,
-) {
-  return Response.json(body, {
-    status,
-    headers: corsHeaders(request, env),
-  });
-}
-
-async function handlePost(request: Request, env: Env) {
-  const body = await request.json().catch(() => null);
-  const candidate =
-    body && typeof body === "object"
-      ? (body as { marca?: unknown }).marca
-      : undefined;
-  const marca = typeof candidate === "string" ? candidate.trim() : "";
-
-  if (marca.length < 2) {
-    return jsonResponse(
-      request,
-      env,
-      { error: "Informe pelo menos 2 caracteres para pesquisar uma marca." },
-      400,
-    );
-  }
-
-  if (marca.length > 120) {
-    return jsonResponse(
-      request,
-      env,
-      { error: "O nome da marca deve ter no máximo 120 caracteres." },
-      400,
-    );
-  }
-
-  const token = env.INFOSIMPLES_TOKEN?.trim();
-  if (!token) {
-    return jsonResponse(
-      request,
-      env,
-      { error: "O token da Infosimples ainda não foi configurado." },
-      500,
-    );
-  }
-
-  const form = new URLSearchParams({
-    token,
-    marca,
-    tipo: "exata",
-    pesquisa_textual: "false",
-    pedidos_vivos: "false",
-    pagina: "1",
-    timeout: "300",
-  });
-
-  try {
-    const apiResponse = await fetch(INFOSIMPLES_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Accept: "application/json",
-      },
-      body: form.toString(),
-    });
-    const responseText = await apiResponse.text();
-
-    let payload: InfosimplesResponse;
-    try {
-      payload = JSON.parse(responseText) as InfosimplesResponse;
-    } catch {
-      return jsonResponse(
-        request,
-        env,
-        { error: "A API retornou uma resposta que não pôde ser lida." },
-        502,
-      );
-    }
-
-    if (!apiResponse.ok || payload.code !== 200) {
-      const details = [payload.code_message, ...(payload.errors ?? [])]
-        .filter(Boolean)
-        .join(" ");
-      return jsonResponse(
-        request,
-        env,
-        { error: details || "A API não conseguiu processar essa consulta." },
-        502,
-      );
-    }
-
-    const firstResult = payload.data?.[0];
-    return jsonResponse(request, env, {
-      processos: firstResult?.processos ?? [],
-      processosTotal: firstResult?.processos_total ?? 0,
-      totalPaginas: firstResult?.total_paginas ?? 1,
-      siteReceipts: payload.site_receipts ?? firstResult?.site_receipts ?? [],
-    });
-  } catch (error) {
-    console.error("Erro ao consultar a API de marcas", error);
-    return jsonResponse(
-      request,
-      env,
-      {
-        error:
-          "Não foi possível acessar a API de marcas. Tente novamente em instantes.",
-      },
-      502,
-    );
-  }
-}
-
-const worker: ExportedHandler<Env> = {
-  async fetch(request, env) {
+// Static landing deployments use the same capture API as the local landing.
+const worker = {
+  async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
     const pathname = url.pathname.replace(/\/$/, "") || "/";
-
-    if (pathname === "/") {
-      return Response.json({ ok: true, service: "consulta-marcas-api" });
+    if (pathname === "/") return Response.json({ ok: true, service: "consulta-marcas-api" });
+    const methods: Record<string, string[]> = {
+      "/api/marcas": ["POST"], "/api/consultas": ["GET"],
+      "/api/leads": ["POST"], "/api/leads/interest": ["GET", "POST"],
+    };
+    const headers = corsHeaders(request, env);
+    if (!methods[pathname]) return new Response("Not Found", { status: 404, headers });
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
+    if (!methods[pathname].includes(request.method)) {
+      return Response.json({ error: "Método não permitido." }, { status: 405, headers });
     }
-
-    if (pathname !== "/api/marcas") {
-      return new Response("Not Found", { status: 404 });
+    const baseUrl = env.OPERATIONS_API_URL?.trim().replace(/\/$/, "");
+    if (!baseUrl) {
+      return Response.json({ error: "O backend operacional ainda não foi configurado." }, { status: 503, headers });
     }
-
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders(request, env),
+    try {
+      const response = await fetch(`${baseUrl}${pathname}${url.search}`, {
+        method: request.method,
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: request.method === "POST" ? await request.text() : undefined,
       });
+      headers.set("Content-Type", "application/json");
+      return new Response(await response.text(), { status: response.status, headers });
+    } catch {
+      return Response.json({ error: "Não foi possível acessar o backend operacional." }, { status: 502, headers });
     }
-
-    if (request.method !== "POST") {
-      return jsonResponse(
-        request,
-        env,
-        { error: "Método não permitido." },
-        405,
-      );
-    }
-
-    return handlePost(request, env);
   },
 };
 

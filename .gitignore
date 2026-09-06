@@ -2,6 +2,9 @@
 
 # dependencies
 /node_modules
+/api-bun/node_modules
+/crm-web/node_modules
+/api-bun/storage/
 /.pnp
 .pnp.*
 .yarn/*
@@ -42,6 +45,8 @@ yarn-error.log*
 next-env.d.ts
 *.tsbuildinfo
 /dist/
+/crm-web/dist/
+/backups/
 /.wrangler/
 /outputs/
 /work/

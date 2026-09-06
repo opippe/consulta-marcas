@@ -1,5 +1,5 @@
 import vinext from "vinext";
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import hostingConfig from "./.openai/hosting.json";
 import { sites } from "./build/sites-vite-plugin";
 
@@ -11,6 +11,7 @@ const { d1, r2 } = hostingConfig;
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const staticBasePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/$/, "");
+const isStaticBuild = process.env.STATIC_EXPORT === "true" || process.env.GITHUB_PAGES === "true";
 
 const localBindingConfig = {
   main: "./worker/index.ts",
@@ -41,12 +42,12 @@ export default defineConfig(async () => {
   process.env.WRANGLER_LOG_PATH ??= ".wrangler/logs";
   process.env.MINIFLARE_REGISTRY_PATH ??= ".wrangler/registry";
 
-  const plugins = [vinext()];
+  const plugins: PluginOption[] = [vinext()];
 
   // The static GitHub Pages build does not need the Worker runtime. Skipping
   // the Cloudflare plugin there also keeps the static build independent from
   // local Worker tooling.
-  if (process.env.GITHUB_PAGES !== "true") {
+  if (!isStaticBuild) {
     plugins.push(sites());
 
     // Wrangler snapshots its log path while the Cloudflare plugin is imported.
@@ -61,7 +62,7 @@ export default defineConfig(async () => {
 
   return {
     base:
-      process.env.GITHUB_PAGES === "true"
+      isStaticBuild
         ? `${staticBasePath}/`
         : undefined,
     server: isCodexSeatbeltSandbox

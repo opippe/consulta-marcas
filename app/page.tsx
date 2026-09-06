@@ -5,12 +5,13 @@ import { ArrowUpRight, FileCheck2, Radar, SearchCheck } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import ContactFields, { contactFormData } from "@/app/components/consulta/ContactFields";
 import ConsultaFooter from "@/app/components/consulta/ConsultaFooter";
 import ConsultaHeader from "@/app/components/consulta/ConsultaHeader";
-import { registrationCtaUrl } from "@/app/consulta/brand";
+
 import { useConsulta } from "@/app/consulta/consulta-context";
 import { apiPath, publicAsset, sitePath } from "@/app/consulta/paths";
-import type { ConsultaResponse } from "@/app/consulta/types";
+import type { ConsultaApiResponse } from "@/app/consulta/types";
 import { eyebrow, focusRing, note } from "@/app/consulta/ui";
 
 const officialLogos = [
@@ -63,12 +64,14 @@ export default function Home() {
   const router = useRouter();
   const { setConsulta } = useConsulta();
   const [marca, setMarca] = useState("");
+  const [registrationRequested, setRegistrationRequested] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    const contact = contactFormData(new FormData(event.currentTarget));
     const nomeMarca = marca.trim();
     if (nomeMarca.length < 2) {
       setError("Informe pelo menos 2 caracteres para iniciar a consulta.");
@@ -79,12 +82,29 @@ export default function Home() {
     setError("");
 
     try {
+      const queryParams = new URLSearchParams(window.location.search);
       const response = await fetch(apiPath("/api/marcas"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ marca: nomeMarca }),
+        body: JSON.stringify({
+          marca: nomeMarca,
+          ...contact,
+          registrationRequested: registrationRequested || queryParams.get("interesse") === "registro",
+          attribution: {
+            utmSource: queryParams.get("utm_source") ?? undefined,
+            utmMedium: queryParams.get("utm_medium") ?? undefined,
+            utmCampaign: queryParams.get("utm_campaign") ?? undefined,
+            utmContent: queryParams.get("utm_content") ?? undefined,
+            utmTerm: queryParams.get("utm_term") ?? undefined,
+            gclid: queryParams.get("gclid") ?? undefined,
+            fbclid: queryParams.get("fbclid") ?? undefined,
+            referralCode: queryParams.get("ref") ?? undefined,
+            landingPage: window.location.href,
+            referrer: document.referrer || undefined,
+          },
+        }),
       });
-      const payload = (await response.json()) as Partial<ConsultaResponse> & {
+      const payload = (await response.json()) as Partial<ConsultaApiResponse> & {
         error?: string;
       };
 
@@ -96,6 +116,7 @@ export default function Home() {
 
       setConsulta({
         marca: nomeMarca,
+        searchToken: payload.searchToken,
         response: {
           processos: payload.processos ?? [],
           processosTotal: payload.processosTotal ?? 0,
@@ -103,7 +124,11 @@ export default function Home() {
           siteReceipts: payload.siteReceipts ?? [],
         },
       });
-      router.push(sitePath(`/resultados?marca=${encodeURIComponent(nomeMarca)}`));
+      const resultParams = new URLSearchParams({ marca: nomeMarca });
+      if (payload.searchToken) {
+        resultParams.set("consulta", payload.searchToken);
+      }
+      router.push(sitePath(`/resultados?${resultParams.toString()}`));
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -137,7 +162,7 @@ export default function Home() {
             <div className="mb-6 flex flex-wrap items-center gap-2.5 text-[0.68rem] font-bold tracking-[0.12em] uppercase">
               <span className="inline-flex items-center gap-2 rounded-lg border border-accent-soft bg-accent-soft px-3 py-2 text-accent-dark">
                 <span className="size-1.75 rounded-full bg-accent" aria-hidden="true" />
-                Flavio Bolsonaro Marcas
+                55 Marcas
               </span>
               <span className="text-muted">Registro de marcas online</span>
             </div>
@@ -154,9 +179,8 @@ export default function Home() {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <a
                 className={`inline-flex min-h-13 items-center justify-center gap-2 rounded-lg bg-cta px-5 text-[0.82rem] font-bold text-white no-underline shadow-cta transition-[background,box-shadow,transform,color] duration-160 ease-out hover:-translate-y-px hover:bg-cta-dark hover:text-white hover:shadow-none ${focusRing}`}
-                href={registrationCtaUrl}
-                target="_blank"
-                rel="noreferrer"
+                href="#diagnostico"
+                onClick={() => setRegistrationRequested(true)}
               >
                 Quero registrar minha marca
                 <ArrowUpRight aria-hidden="true" size={16} strokeWidth={2.2} />
@@ -221,6 +245,8 @@ export default function Home() {
                   maxLength={120}
                   required
                 />
+                <div className="mt-5"><ContactFields /></div>
+                {registrationRequested && <p className="text-sm text-accent-dark" role="status">Seu interesse em registrar a marca será enviado junto com a consulta.</p>}
                 <button
                   className={`mt-3 flex min-h-14 w-full cursor-pointer items-center justify-between rounded-lg border-0 bg-[#E56B4D] px-4.25 pl-4.75 text-[0.84rem] font-bold text-white shadow-danger transition-[background,box-shadow,transform,color] duration-160 ease-out [&:not(:disabled):hover]:-translate-y-px [&:not(:disabled):hover]:bg-[#E56B4D] [&:not(:disabled):hover]:text-white [&:not(:disabled):hover]:shadow-none disabled:cursor-wait disabled:opacity-70 ${focusRing}`}
                   type="submit"
@@ -235,15 +261,15 @@ export default function Home() {
 
               <div className="mt-5 border-t border-line pt-4.5">
                 <div className="flex flex-wrap gap-x-5">
-                  <span className={note}>Sem cadastro</span>
+                  <span className={note}>Consulta gratuita</span>
                   <span className={note}>Pesquisa preliminar</span>
                 </div>
-                {/* <Link
+                <a
                   className={`mt-4 inline-flex text-[0.74rem] font-bold text-ink-soft no-underline transition-colors hover:text-accent-dark hover:underline hover:underline-offset-3 ${focusRing}`}
                   href="/resultados?preview=resultados"
                 >
                   Ver um exemplo de resultado <ArrowUpRight className="ml-1" aria-hidden="true" size={14} strokeWidth={2.2} />
-                </Link> */} 
+                </a>
               </div>
 
               <div className="mt-4 min-h-8" aria-live="polite">
@@ -313,7 +339,7 @@ export default function Home() {
           </section>
         </section>
 
-        <section className="grid grid-cols-3 border-y border-line py-7 max-tablet:grid-cols-1 max-tablet:gap-5 max-compact:py-5" aria-label="A jornada da Flavio Bolsonaro Marcas">
+        <section className="grid grid-cols-3 border-y border-line py-7 max-tablet:grid-cols-1 max-tablet:gap-5 max-compact:py-5" aria-label="A jornada da 55 Marcas">
           <div className="flex items-center gap-3 border-r border-line px-6 first:pl-0 max-tablet:border-r-0 max-tablet:border-b max-tablet:pb-5 max-compact:px-0">
             <span className="font-display text-[1.45rem] font-semibold tracking-[-0.08em] text-accent-dark">01</span>
             <div>
@@ -373,7 +399,8 @@ export default function Home() {
                 Transforme a pesquisa em um processo acompanhado para proteger
                 o nome que faz seu negócio ser único.
               </p>
-              <a className={`mt-7 inline-flex text-[0.78rem] font-bold text-accent no-underline hover:text-white hover:underline hover:underline-offset-3 ${focusRing}`} href={registrationCtaUrl} target="_blank" rel="noreferrer">
+              <a className={`mt-7 inline-flex text-[0.78rem] font-bold text-accent no-underline hover:text-white hover:underline hover:underline-offset-3 ${focusRing}`} href="#diagnostico"
+                onClick={() => setRegistrationRequested(true)}>
                 Quero registrar minha marca <ArrowUpRight className="ml-1" aria-hidden="true" size={15} strokeWidth={2.2} />
               </a>
             </article>
@@ -495,9 +522,8 @@ export default function Home() {
             <div className="mt-7 shrink-0">
               <a
                 className={`inline-flex min-h-13 items-center justify-center gap-2 rounded-lg bg-cta px-5 text-[0.82rem] font-bold text-white no-underline shadow-cta transition-[background,box-shadow,transform,color] duration-160 ease-out hover:-translate-y-px hover:bg-cta-dark hover:text-white hover:shadow-none ${focusRing}`}
-                href={registrationCtaUrl}
-                target="_blank"
-                rel="noreferrer"
+                href="#diagnostico"
+                onClick={() => setRegistrationRequested(true)}
               >
                 Começar meu registro
                 <ArrowUpRight aria-hidden="true" size={16} strokeWidth={2.2} />

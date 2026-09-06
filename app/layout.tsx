@@ -6,7 +6,7 @@ import "./globals.css";
 const faviconPath = sitePath("/favicon.svg");
 
 export const metadata: Metadata = {
-  title: "Flavio | Registro de marcas",
+  title: "55 Marcas",
   description:
     "Pesquise, registre e acompanhe sua marca com clareza. Faça um diagnóstico preliminar gratuito.",
   icons: {

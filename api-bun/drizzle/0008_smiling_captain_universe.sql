@@ -1,0 +1,2 @@
+CREATE TYPE "public"."lead_interest" AS ENUM('SEARCH_ONLY', 'REGISTRATION_REQUESTED');--> statement-breakpoint
+ALTER TABLE "leads" ADD COLUMN "interest" "lead_interest" DEFAULT 'REGISTRATION_REQUESTED' NOT NULL;

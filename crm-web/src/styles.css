@@ -1,0 +1,94 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Raleway:wght@600;700&display=swap");
+@import "tailwindcss";
+
+:root {
+  color: #173f35;
+  background: #f6f2ea;
+  font-family: "DM Sans", "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #f6f2ea;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  color: #173f35;
+  background: #79b896;
+}
+
+.font-display {
+  font-family: "Raleway", "Segoe UI", sans-serif;
+}
+
+.focus-ring:focus-visible {
+  outline: 3px solid rgba(47, 191, 115, 0.3);
+  outline-offset: 2px;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.animate-enter {
+  animation: enter 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body,
+  .proposal-page {
+    background: white !important;
+  }
+
+  .print-hidden {
+    display: none !important;
+  }
+
+  .proposal-page > div {
+    max-width: none;
+    padding: 0;
+  }
+
+  .proposal-page article {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}

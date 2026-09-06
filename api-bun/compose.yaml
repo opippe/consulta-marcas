@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: flavio_marcas
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d flavio_marcas"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - operations_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  operations_postgres_data:

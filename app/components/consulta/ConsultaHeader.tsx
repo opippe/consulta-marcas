@@ -5,7 +5,7 @@ import MarcaCertaMark from "@/app/components/consulta/MarcaCertaMark";
 import { sitePath } from "@/app/consulta/paths";
 import { focusRing } from "@/app/consulta/ui";
 
-export default function ConsultaHeader() {
+export default function ConsultaHeader({ registrationHref = registrationCtaUrl }: { registrationHref?: string }) {
   return (
     <header className="sticky top-0 z-50 mx-auto flex min-h-20 w-shell max-w-295 items-center justify-between gap-6 border-b border-line bg-background/95 backdrop-blur-sm max-compact:min-h-19 max-compact:w-full max-compact:mx-0 max-compact:px-5">
       <Link
@@ -32,9 +32,7 @@ export default function ConsultaHeader() {
       </nav>
       <a
         className={`inline-flex min-h-10 items-center gap-2 rounded-lg bg-cta px-4 text-[0.73rem] font-bold text-white no-underline shadow-cta transition-[background,box-shadow,transform,color] duration-160 ease-out hover:-translate-y-px hover:bg-cta-dark hover:text-white hover:shadow-none ${focusRing}`}
-        href={registrationCtaUrl}
-        target="_blank"
-        rel="noreferrer"
+        href={registrationHref}
       >
         Quero registrar
         <ArrowUpRight aria-hidden="true" size={15} strokeWidth={2.2} />

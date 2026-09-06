@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import RegistrationInterest from "@/app/components/consulta/RegistrationInterest";
 import { registrationCtaUrl } from "@/app/consulta/brand";
 import { sitePath } from "@/app/consulta/paths";
 import type { ConsultaResponse } from "@/app/consulta/types";
@@ -17,6 +18,7 @@ type ResultadosContentProps = {
   result: ConsultaResponse | null;
   isPreview?: boolean;
   onClosePreview?: () => void;
+  searchToken?: string;
 };
 
 export default function ResultadosContent({
@@ -24,6 +26,7 @@ export default function ResultadosContent({
   result,
   isPreview = false,
   onClosePreview,
+  searchToken,
 }: ResultadosContentProps) {
   if (!result) {
     return (
@@ -195,29 +198,31 @@ export default function ResultadosContent({
         </div>
       )}
 
-      <div className="mt-8 flex items-center justify-between gap-6 rounded-panel bg-ink px-7 py-6 text-white max-tablet:block max-compact:px-5.5">
-        <div className="max-w-130">
-          <p className="m-0 text-[0.68rem] font-bold tracking-[0.14em] text-accent uppercase">
-            Próximo passo
-          </p>
-          <h2 className="mb-0 mt-2 font-display text-[1.2rem] font-semibold tracking-[-0.03em]">
-            Quer transformar a pesquisa em proteção?
-          </h2>
-          <p className="mb-0 mt-2 text-[0.8rem] leading-[1.55] text-ink-on-dark">
-            A consulta é um primeiro passo. Uma análise especializada ajuda a
-            avaliar classes e similaridades antes do pedido.
-          </p>
+      {searchToken && !isPreview ? (
+        <RegistrationInterest key={searchToken} searchToken={searchToken} brandName={marca} />
+      ) : (
+        <div className="mt-8 flex items-center justify-between gap-6 rounded-panel bg-ink px-7 py-6 text-white max-tablet:block max-compact:px-5.5">
+          <div className="max-w-130">
+            <p className="m-0 text-[0.68rem] font-bold tracking-[0.14em] text-accent uppercase">
+              Próximo passo
+            </p>
+            <h2 className="mb-0 mt-2 font-display text-[1.2rem] font-semibold tracking-[-0.03em]">
+              Quer transformar a pesquisa em proteção?
+            </h2>
+            <p className="mb-0 mt-2 text-[0.8rem] leading-[1.55] text-ink-on-dark">
+              A consulta é um primeiro passo. Uma análise especializada ajuda a
+              avaliar classes e similaridades antes do pedido.
+            </p>
+          </div>
+          <a
+            className={`mt-1 inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-cta px-4 text-[0.76rem] font-bold text-white no-underline shadow-cta transition-[background,box-shadow,transform,color] duration-160 ease-out hover:-translate-y-px hover:bg-accent-dark hover:shadow-none ${focusRing}`}
+            href={registrationCtaUrl}
+          >
+            Quero registrar minha marca
+            <ArrowUpRight aria-hidden="true" size={15} strokeWidth={2.2} />
+          </a>
         </div>
-        <a
-          className={`mt-1 inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-cta px-4 text-[0.76rem] font-bold text-white no-underline shadow-cta transition-[background,box-shadow,transform,color] duration-160 ease-out hover:-translate-y-px hover:bg-accent-dark hover:shadow-none ${focusRing}`}
-          href={registrationCtaUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Quero registrar minha marca
-          <ArrowUpRight aria-hidden="true" size={15} strokeWidth={2.2} />
-        </a>
-      </div>
+      )}
     </section>
   );
 }

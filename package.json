@@ -7,14 +7,22 @@
   },
   "scripts": {
     "dev": "vinext dev",
+    "dev:operations": "bun run --cwd api-bun dev",
+    "dev:crm": "bun run --cwd crm-web dev",
     "build": "vinext build",
+    "build:pages": "node scripts/build-pages.mjs",
     "start": "vinext start",
     "dev:api": "wrangler dev --config wrangler-api.jsonc",
     "deploy:api": "wrangler deploy --config wrangler-api.jsonc",
     "secret:api": "wrangler secret put INFOSIMPLES_TOKEN --config wrangler-api.jsonc",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:generate:operations": "bun run --cwd api-bun db:generate",
+    "db:migrate:operations": "bun run --cwd api-bun db:migrate",
+    "typecheck:operations": "bun run --cwd api-bun typecheck",
+    "typecheck:crm": "bun run --cwd crm-web typecheck",
+    "admin:create": "bun run --cwd api-bun admin:create"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

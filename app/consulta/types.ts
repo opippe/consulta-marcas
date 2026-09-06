@@ -16,7 +16,13 @@ export type ConsultaResponse = {
   siteReceipts: string[];
 };
 
+export type ConsultaApiResponse = ConsultaResponse & {
+  marca?: string;
+  searchToken?: string;
+};
+
 export type ConsultaState = {
   marca: string;
+  searchToken?: string;
   response: ConsultaResponse;
 };
