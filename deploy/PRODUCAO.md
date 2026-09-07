@@ -44,8 +44,13 @@ com o link pode abri-lo. Não os coloque em analytics, logs públicos ou indexad
 2. Escolha uma região disponível próxima à região do serviço Railway; compare
    disponibilidade em ambas as contas antes de escolher. Não adote uma região
    incompatível só por ser próxima do Brasil.
-3. No painel de conexão, copie a URL com **connection pooling** para `DATABASE_URL`.
-4. Copie também a URL **sem pooling** para `DATABASE_MIGRATION_URL`.
+3. No formulário de criação, deixe desativadas as opções **Object storage**,
+   **Functions**, **AI gateway** e **Neon Auth**. Esta aplicação já usa Cloudflare
+   R2 para os PDFs, Railway para a API Bun, não precisa de um gateway de IA nesta
+   primeira versão e usa Better Auth dentro da própria API. Ativar Neon Auth
+   criaria uma segunda camada de autenticação e tabelas que não serão utilizadas.
+4. No painel de conexão, copie a URL com **connection pooling** para `DATABASE_URL`.
+5. Copie também a URL **sem pooling** para `DATABASE_MIGRATION_URL`.
    Preserve os parâmetros SSL fornecidos pelo Neon nas duas URLs.
 5. Não importe os leads fictícios locais. O pré-deploy aplica todas as migrations
    versionadas no novo banco; não basta ter rodado a migration no seu computador.
@@ -60,11 +65,37 @@ O banco gratuito tem limites de armazenamento e computação: acompanhe o painel
 2. Crie um bucket Standard chamado `55marcas-documentos`.
 3. Mantenha **Public Development URL/r2.dev desabilitado**, sem domínio público.
    Não configure CORS para o bucket: o navegador fala com a API, não com o R2.
-4. Crie uma credencial S3 com permissão **Object Read & Write**, limitada a esse
-   bucket. Copie Access Key ID, Secret Access Key e o endpoint S3 exato mostrado.
-5. Preencha no Railway: `DOCUMENT_STORAGE_DRIVER=r2`, `R2_BUCKET`, `R2_ENDPOINT`,
-   `R2_ACCESS_KEY_ID` e `R2_SECRET_ACCESS_KEY`. Não use o token de API da Cloudflare
-   como se fosse a Secret Access Key: são credenciais diferentes.
+4. No painel Cloudflare, abra **Storage & databases → R2 → Overview**. Na área
+   **Account Details**, clique em **Manage** ao lado de **API Tokens**. Essa é a
+   tela de tokens do R2; não use **My Profile → API Tokens**, que é outra API.
+5. Clique em **Create Account API token**. Dê um nome como `55marcas-railway-prod`.
+   Se sua conta não permitir criar token de conta, use **Create User API token**;
+   nesse caso ele ficará vinculado ao seu usuário e deixará de funcionar se esse
+   usuário for removido da conta.
+6. Em **Permissions**, selecione **Object Read & Write**. Marque **Apply to
+   specific buckets only** e selecione somente `55marcas-documentos`. Não escolha
+   **Admin Read & Write**: ele permitiria gerenciar buckets e configurações da
+   conta. `Object Read & Write` é a permissão S3 de ler, gravar e listar objetos
+   no bucket escolhido; ela não dá ao serviço acesso aos outros buckets.
+7. Defina a validade conforme sua política de segurança. Para começar, pode usar
+   uma validade longa com revisão documentada; se escolher expiração, programe a
+   rotação antes da data. Clique em **Create API Token**.
+8. Na tela de confirmação, copie imediatamente **Access Key ID** e **Secret Access
+   Key** para um gerenciador de senhas. O Secret Access Key não poderá ser exibido
+   novamente. Não cole esses valores em Git, `.env` versionado, issue ou chat.
+9. Copie também o **S3 API endpoint** mostrado na confirmação ou no Overview:
+   `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`. Substitua `<ACCOUNT_ID>` pelo
+   valor real exibido pela Cloudflare, sem `< >`, e mantenha `https://`.
+10. Se o bucket tiver sido criado em uma jurisdição específica, use o endpoint
+    correspondente (`.eu.r2.cloudflarestorage.com`, `.us...` ou `.fedramp...`),
+    não o endpoint `default`. Para o bucket comum criado sem jurisdição, use o
+    endpoint padrão acima.
+11. Preencha no Railway: `DOCUMENT_STORAGE_DRIVER=r2`, `R2_BUCKET`, `R2_ENDPOINT`,
+    `R2_ACCESS_KEY_ID` e `R2_SECRET_ACCESS_KEY`. Não use o token de API da Cloudflare
+    como se fosse a Secret Access Key: são credenciais diferentes.
+
+Referências: [gerar credenciais S3 para R2](https://developers.cloudflare.com/r2/get-started/s3/)
+e [autenticação e permissões dos tokens R2](https://developers.cloudflare.com/r2/api/tokens/).
 
 O adaptador preserva os bytes originais do PDF, sem reescrever a assinatura.
 O banco guarda metadados e SHA-256; o arquivo permanece privado. O acesso exige
