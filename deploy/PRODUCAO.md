@@ -108,10 +108,11 @@ os arquivos, preservando `storageKey`; o deploy não faz essa migração de dado
 1. Crie um projeto e um serviço a partir do repositório GitHub; selecione a branch
    que contém o código validado. Não adicione um Postgres Railway: usaremos Neon.
 2. Configure **Root Directory** como `/api-bun`.
-3. Configure o caminho do arquivo de configuração como `/api-bun/railway.toml`
-   (caminho a partir da raiz do repositório). Ele seleciona Docker, migrations no
-   pré-deploy e healthcheck `/ready`. O Dockerfile é `Dockerfile` dentro da raiz
-   do serviço. Não substitua por um builder automático.
+3. **Não preencha o campo Railway Config File.** `railway.toml`/`railway.json`
+   são o recurso antigo Config as Code; serviços novos não podem adotá-lo e o
+   suporte termina em 01/12/2026. Use o procedimento de Infrastructure as Code
+   logo abaixo. Com Root Directory `/api-bun`, o Railway detecta automaticamente
+   o `Dockerfile` que está na raiz desse serviço; não informe `/api-bun/Dockerfile`.
 4. Em Variables, use `deploy/.env.example` como checklist e substitua todos os
    placeholders. Nunca copie variáveis de servidor para um projeto Pages.
 5. Gere **três valores distintos** para `BETTER_AUTH_SECRET`, `PROPOSAL_LINK_SECRET`
@@ -133,8 +134,211 @@ os arquivos, preservando `storageKey`; o deploy não faz essa migração de dado
    diretamente. Não use modo SSL Flexible. Não coloque um cache de API no caminho.
 9. Confira `https://api.55marcas.com.br/health` e `/ready`: ambos devem responder
    200. `/ready` testa o banco; não testa InfoSimples nem permissões do R2.
-10. Mantenha uma réplica e desabilite suspensão do serviço inicialmente. Configure
-    alertas de custo e acompanhe o uso. Um limite financeiro rígido pode parar o app.
+10. Configure escala e custos conforme a seção abaixo. Para o lançamento inicial,
+    use uma réplica, desabilite Serverless e configure um alerta de custo sem limite
+    rígido. Um hard limit pode colocar todos os workloads offline.
+
+### Migrar para Infrastructure as Code
+
+O arquivo `api-bun/railway.toml` que está no repositório é apenas uma configuração
+legada de transição. Não selecione seu caminho no painel. A configuração atual do
+projeto deve ficar em `.railway/railway.ts`, na raiz do repositório, e ser aplicada
+pela CLI Railway. A documentação oficial informa que esse é o substituto do
+Config as Code e que um projeto não deve ser gerenciado pelos dois sistemas ao
+mesmo tempo.
+
+Faça a migração a partir da raiz do repositório (`consulta-marcas`), não de
+`api-bun`:
+
+Primeiro instale os dois componentes, que têm funções diferentes:
+
+- **CLI global**: fornece o comando `railway` (`@railway/cli`).
+- **Pacote local**: fornece o DSL TypeScript importado por
+  `.railway/railway.ts` (`railway`).
+
+```powershell
+npm install --global @railway/cli
+npm install --save-dev railway
+railway --version
+```
+
+Se o primeiro ou segundo `npm install` retornar `ECONNRESET`, não continue para
+`railway login`: o executável ainda não foi instalado. Confirme a conectividade
+com o registro e tente novamente com retries maiores:
+
+```powershell
+npm config get registry
+npm ping --registry=https://registry.npmjs.org/
+npm cache verify
+npm install --global @railway/cli --fetch-retries=5 --fetch-retry-mintimeout=2000 --fetch-retry-maxtimeout=60000
+npm install --save-dev railway --fetch-retries=5 --fetch-retry-mintimeout=2000 --fetch-retry-maxtimeout=60000
+```
+
+O registro esperado é `https://registry.npmjs.org/`. Se a instalação global
+terminar mas uma janela PowerShell antiga ainda disser que `railway` não existe,
+feche-a, abra outra e execute `railway --version` novamente. Não configure um
+proxy no npm se você não usa proxy corporativo.
+
+Se o npm mostrar `allow-scripts` para `@railway/cli`, isso é uma proteção da sua
+configuração local. Se `railway --version` funcionar, o aviso não bloqueia este
+procedimento. Caso algum comando da CLI reclame do `postinstall`, permita somente
+esse pacote e reinstale-o, sem liberar scripts globalmente:
+
+```powershell
+npm config set allow-scripts=@railway/cli --location=user
+npm install --global @railway/cli
+```
+
+Com os dois componentes instalados, prossiga:
+
+```powershell
+railway login
+railway link
+railway config migrate
+```
+
+Se o nome do serviço no Railway for diferente do nome da pasta que contém o
+`railway.toml`, passe o nome real com `--service`. Por exemplo, neste projeto a
+pasta é `api-bun`, mas o serviço selecionado no Railway é `consulta-marcas`:
+
+```powershell
+railway config migrate --service consulta-marcas
+```
+
+Em um repositório com um único arquivo Config as Code, essa opção também define
+o nome do serviço emitido no arquivo IaC. A prévia deve conter
+`service("consulta-marcas", ...)`; não aplique uma prévia que contenha
+`service("api-bun", ...)` se esse não for o nome do serviço no painel.
+
+O comando sem `--apply` apenas mostra a migração proposta. Se o resultado apontar
+para o projeto e o ambiente de produção corretos, aplique-a:
+
+```powershell
+railway config migrate --service consulta-marcas --apply
+railway config plan
+```
+
+Se o plano listar exclusões de variáveis, do repositório/serviço ou de domínios,
+**não execute `config apply`**. Isso ocorre quando a migração de um único arquivo
+gera uma configuração parcial que ainda não declara todo o estado existente. Faça
+uma cópia local e importe o estado atual do projeto; o `pull` renderiza as
+variáveis existentes como `preserve()` sem expor seus valores:
+
+```powershell
+Copy-Item -LiteralPath .railway\railway.ts -Destination .railway\railway.ts.migrate-backup -Force
+railway config pull --force
+```
+
+Não use `--omit-preserved-variables` nem `--include-variables`. Depois do `pull`,
+adicione novamente no bloco do serviço as intenções que vinham do arquivo legado
+(`healthcheck: "/ready"`, `healthcheckTimeout: 120` e
+`preDeploy: "bun run db:migrate"`) e execute `railway config plan` outra vez.
+O plano seguro deve preservar variáveis e a fonte GitHub, mostrando somente essas
+alterações de deploy.
+
+O `migrate --apply` cria `.railway/railway.ts` e limpa o vínculo do campo legado
+**Railway Config File**. O `config plan` é somente leitura: confira se ele não
+propõe apagar serviços, variáveis, domínios ou recursos que você não pretendia
+alterar. Só depois confirme:
+
+```powershell
+railway config apply
+```
+
+#### Contorno para o erro de versão no Windows
+
+Se `railway --version` mostrar uma versão atual (por exemplo, `5.49.2`), mas o
+`config plan` disser que a CLI é anterior a `5.42.1`, a causa pode ser o shim
+`railway.ps1`: o SDK TypeScript tenta executar `railway` diretamente e o Node não
+executa esse shim do PowerShell. Use o executável real da instalação global na
+mesma janela PowerShell:
+
+```powershell
+$railwayExe = Join-Path (npm root -g) '@railway\cli\bin\railway.exe'
+Test-Path -LiteralPath $railwayExe
+$env:_ = $railwayExe
+& $railwayExe config plan
+```
+
+Depois de revisar um plano seguro, mantenha `$env:_` definido e execute o `apply`
+com o mesmo `$railwayExe`. Essa variável vale apenas para a janela atual.
+
+Não use `--confirm-destructive` nesta primeira aplicação. Se o plano mostrar
+remoções inesperadas, pare e não aplique; normalmente isso indica que a CLI está
+vinculada ao workspace/projeto/ambiente errado ou que a configuração foi gerada
+como parcial. O arquivo gerado deve manter, no mínimo, estas intenções para a API:
+
+- fonte GitHub `opippe/consulta-marcas`, branch de produção e `rootDirectory` `api-bun`;
+- Dockerfile detectado dentro de `api-bun`;
+- pre-deploy `bun run db:migrate`;
+- healthcheck `/ready` com timeout de 120 segundos;
+- política `ON_FAILURE` com até 3 tentativas;
+- uma réplica na região escolhida.
+
+Depois de conferir um `config plan` limpo e um deploy bem-sucedido, remova o arquivo
+legado `api-bun/railway.toml` do repositório em um commit separado. Não o remova
+antes da migração se ainda precisar que a CLI o importe. A partir daí, mudanças de
+infraestrutura devem ser feitas no `.railway/railway.ts` e aplicadas com `config plan`
+e `config apply`; variáveis secretas continuam no painel Railway e não devem ser
+gravadas nesse arquivo.
+
+### Escala, suspensão e alertas no Railway
+
+Faça esta configuração no ambiente de produção, depois do primeiro deploy da API:
+
+1. Abra o projeto no Railway e selecione o serviço da API (o serviço baseado em
+   `api-bun`). Entre em **Settings → Deploy → Scale/Regions**. Deixe somente a
+   região escolhida para a API com **1 replica**; remova outras regiões ou coloque
+   `0` nelas. Não confunda quantidade de réplicas com **Replica Limits** (limite de
+   CPU/memória por réplica). Deixe os limites de recurso no padrão inicialmente.
+   Cada réplica recebe os recursos completos alocados ao serviço, portanto duas
+   réplicas também podem aproximadamente duplicar o consumo.
+2. Ainda em **Settings → Deploy → Serverless**, deixe **Enable Serverless**
+   desativado. Serverless é o antigo App Sleeping: ele pode suspender o container
+   após um período sem tráfego de saída e a primeira requisição pode sofrer cold
+   start. Depois de alterar essa opção, faça um novo deploy/redeploy para garantir
+   que o container criado use a configuração atual.
+3. No seletor do workspace, abra **Usage** (ou **Workspace Usage**) e localize
+   **Usage limits / Compute usage**. Configure um **custom email alert/soft limit**
+   de um valor que você acompanha. Sugestão inicial: `US$ 10` por ciclo de cobrança.
+   O alerta apenas envia e-mail; não interrompe o serviço.
+4. No primeiro mês, deixe o **hard limit** desativado se a prioridade for
+   disponibilidade. Se você preferir um teto absoluto depois de validar os custos,
+   use, por exemplo, soft `US$ 10` e hard `US$ 25`, substituindo pelos valores que
+   você aceita. Ao atingir o hard limit, o Railway pode desligar os workloads até
+   o próximo ciclo ou até a remoção do limite; não use esse recurso sem aceitar
+   essa interrupção.
+5. Acompanhe **Usage → Projects** e **Metrics** da API diariamente durante a
+   primeira semana. Verifique CPU, memória, egress, deployments e valor estimado.
+   Também acompanhe separadamente Neon, Cloudflare/R2 e o saldo/uso da InfoSimples:
+   o alerta de compute do Railway não cobre esses serviços.
+
+Opcionalmente, com a CLI Railway autenticada e vinculada ao projeto, consulte:
+
+```powershell
+railway usage
+railway usage projects --project NOME_OU_ID_DO_PROJETO --period current
+railway usage limit status --target workspace
+```
+
+Para criar apenas o alerta de e-mail, sem alterar um hard limit existente:
+
+```powershell
+railway usage limit set --target workspace --soft 10
+```
+
+Para configurar também um hard limit explícito, use valores inteiros em dólares:
+
+```powershell
+railway usage limit set --target workspace --soft 10 --hard 25
+```
+
+Use a tela de Usage para confirmar o workspace antes de executar os comandos. A
+CLI aceita valores em dólares inteiros para compute; o hard limit precisa ser maior
+ou igual ao soft limit. Consulte a [documentação de uso da CLI](https://docs.railway.com/cli/usage),
+o guia de [escala e réplicas](https://docs.railway.com/deployments/scaling),
+o de [Serverless](https://docs.railway.com/deployments/serverless) e o de
+[controle de custos](https://docs.railway.com/pricing/cost-control).
 
 ### Primeiro administrador
 
