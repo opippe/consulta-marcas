@@ -4,6 +4,8 @@ export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  crmRole: text("crm_role", { enum: ["ADMIN", "COLLABORATOR"] }),
+  crmActive: boolean("crm_active").notNull().default(true),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

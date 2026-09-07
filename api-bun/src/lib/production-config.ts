@@ -3,7 +3,7 @@ import { validateDocumentStorage } from "./document-storage";
 export function validateProductionConfig() {
   validateDocumentStorage();
   if (process.env.NODE_ENV !== "production") return;
-  for (const name of ["DATABASE_URL", "INFOSIMPLES_TOKEN", "CRM_ALLOWED_EMAILS", "CORS_ORIGINS", "BETTER_AUTH_URL"]) {
+  for (const name of ["DATABASE_URL", "INFOSIMPLES_TOKEN", "CORS_ORIGINS", "BETTER_AUTH_URL"]) {
     if (!process.env[name]?.trim()) throw new Error(`${name} obrigatório em produção.`);
   }
   const secrets = ["BETTER_AUTH_SECRET", "PROPOSAL_LINK_SECRET", "RATE_LIMIT_SALT"].map(name => {

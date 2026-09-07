@@ -56,6 +56,7 @@ import {
   type SessionData,
 } from "./api";
 import { downloadContractPdf } from "./contract-pdf";
+import { UsersPage } from "./UsersPage";
 import {
   ContractDocumentUploadDialog,
   ContractOperationsPanel,
@@ -2247,6 +2248,7 @@ function PublicContract({ token }: { token: string }) {
 }
 
 function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () => void }) {
+  const [page, setPage] = useState(() => window.location.hash === "#/usuarios" ? "users" : "leads");
   const [data, setData] = useState<LeadListOutput>();
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
@@ -2256,6 +2258,16 @@ function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () =
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [mobileNav, setMobileNav] = useState(false);
+
+  useEffect(() => {
+    const navigate = () => {
+      setPage(window.location.hash === "#/usuarios" ? "users" : "leads");
+      setMobileNav(false);
+      setSelectedId(undefined);
+    };
+    window.addEventListener("hashchange", navigate);
+    return () => window.removeEventListener("hashchange", navigate);
+  }, []);
 
   const loadLeads = useCallback(async () => {
     setLoading(true);
@@ -2277,9 +2289,10 @@ function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () =
   }, [deferredQuery, status, interest]);
 
   useEffect(() => {
+    if (page !== "leads") return;
     const timeoutId = window.setTimeout(() => void loadLeads(), 0);
     return () => window.clearTimeout(timeoutId);
-  }, [loadLeads]);
+  }, [loadLeads, page]);
 
   const todayCount = useMemo(() => {
     const today = new Date().toDateString();
@@ -2301,9 +2314,12 @@ function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () =
           <button className="lg:hidden" onClick={() => setMobileNav(false)} aria-label="Fechar menu"><X /></button>
         </div>
         <nav className="mt-12 space-y-2">
-          <a className="flex items-center gap-3 rounded-xl bg-white/10 px-3 py-3 text-sm font-bold" href="#">
+          <a className={`focus-ring flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold ${page === "leads" ? "bg-white/10" : "text-[#d9d6d0] hover:bg-white/5"}`} href="#/leads" aria-current={page === "leads" ? "page" : undefined} onClick={() => setMobileNav(false)}>
             <UsersRound className="size-4 text-[#79b896]" /> Leads
           </a>
+          {session.user.crmRole === "ADMIN" && <a className={`focus-ring flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold ${page === "users" ? "bg-white/10" : "text-[#d9d6d0] hover:bg-white/5"}`} href="#/usuarios" aria-current={page === "users" ? "page" : undefined} onClick={() => setMobileNav(false)}>
+            <UserRound className="size-4 text-[#79b896]" /> Usuários
+          </a>}
           <span className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#d9d6d0]/60">
             <LayoutDashboard className="size-4" /> Dashboard <small className="ml-auto text-[9px] uppercase">Em breve</small>
           </span>
@@ -2336,17 +2352,17 @@ function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () =
               <Menu className="size-5" />
             </button>
             <div>
-              <p className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-[#26745f]">Comercial</p>
-              <h1 className="font-display m-0 text-xl font-bold tracking-[-0.03em] text-[#173f35] sm:text-2xl">Central de leads</h1>
+              <p className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-[#26745f]">{page === "users" ? "Administração" : "Comercial"}</p>
+              <h1 className="font-display m-0 text-xl font-bold tracking-[-0.03em] text-[#173f35] sm:text-2xl">{page === "users" ? "Usuários" : "Central de leads"}</h1>
             </div>
           </div>
-          <div className="hidden items-center gap-2 rounded-full bg-[#e3f0e8] px-3 py-2 text-xs font-bold text-[#26745f] sm:flex">
+          {page === "leads" && <div className="hidden items-center gap-2 rounded-full bg-[#e3f0e8] px-3 py-2 text-xs font-bold text-[#26745f] sm:flex">
             <span className="size-2 rounded-full bg-[#2fbf73]" />
             {todayCount} novo(s) hoje
-          </div>
+          </div>}
         </header>
 
-        <div className="mx-auto max-w-[1480px] p-5 sm:p-8 lg:p-10">
+        {page === "users" ? session.user.crmRole === "ADMIN" ? <UsersPage currentUserId={session.user.id} /> : <p role="alert" className="p-8 text-[#b64b3f]">Somente administradores podem gerenciar usuários. <a href="#/leads" className="underline">Voltar aos leads</a></p> : <div className="mx-auto max-w-[1480px] p-5 sm:p-8 lg:p-10">
           <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <MetricCard label="Todos os leads" value={data?.total ?? 0} icon={UsersRound} active={status === "ALL"} onClick={() => setStatus("ALL")} />
             <MetricCard label="Novos" value={data?.byStatus.NEW ?? 0} icon={Sparkles} active={status === "NEW"} onClick={() => setStatus("NEW")} />
@@ -2453,7 +2469,7 @@ function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () =
               </>
             )}
           </section>
-        </div>
+        </div>}
       </main>
 
       {selectedId && (

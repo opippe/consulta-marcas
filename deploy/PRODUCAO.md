@@ -350,8 +350,8 @@ Defina temporariamente `CRM_ADMIN_EMAIL`, `CRM_ADMIN_NAME` e `CRM_ADMIN_PASSWORD
 no ambiente do comando; o e-mail precisa constar em `CRM_ALLOWED_EMAILS`.
 
 ```powershell
-# Na pasta api-bun; railway run injeta as variáveis do serviço selecionado.
-railway run bun run admin:create
+# A partir da raiz do repositório; force o serviço e o ambiente de produção.
+railway run --service consulta-marcas --environment production bun run --cwd api-bun admin:create
 ```
 
 O comando abre o cadastro apenas em seu próprio processo, não no servidor web.
@@ -359,6 +359,14 @@ Remova `CRM_ADMIN_PASSWORD` das variáveis após criar o usuário. Não execute 
 comando como start/pre-deploy. Confira antes que DATABASE_URL aponta ao Neon de
 produção e não ao Postgres local. Sem `railway run`, `bun run admin:create` lê o
 ambiente local e não cria necessariamente o usuário no banco de produção.
+
+Se o CRM responder `401 Unauthorized` no `POST /api/auth/sign-in/email`, confirme
+que o usuário foi criado nesse banco de produção e que a senha usada é a mesma do
+cadastro. `CRM_ALLOWED_EMAILS` não cria o usuário: ele deve conter o mesmo e-mail
+do administrador, separado por vírgulas quando houver mais de um operador. Se o
+e-mail já existir, não execute o cadastro novamente; use a senha original ou
+cadastre outro e-mail autorizado. Nunca coloque `CRM_ADMIN_PASSWORD` no Git ou em
+variáveis permanentes do runtime.
 
 ## 5. Dois projetos Cloudflare Pages
 
@@ -421,6 +429,30 @@ Variáveis públicas adicionais:
 VITE_API_BASE_URL=https://api.55marcas.com.br
 VITE_PUBLIC_PROPOSAL_URL=https://crm.55marcas.com.br
 ```
+
+Se o login retornar `403` com `No 'Access-Control-Allow-Origin' header`, revise no
+serviço Railway da API, no ambiente **production**, a variável abaixo. O valor deve
+ser uma única linha, sem aspas, espaços ou barras finais:
+
+```env
+CORS_ORIGINS=https://55marcas.com.br,https://www.55marcas.com.br,https://crm.55marcas.com.br
+BETTER_AUTH_URL=https://api.55marcas.com.br
+```
+
+Salve as variáveis e faça um novo deploy da API. O preflight deve responder com
+`Access-Control-Allow-Origin: https://crm.55marcas.com.br` e
+`Access-Control-Allow-Credentials: true`:
+
+```powershell
+curl.exe -i -X OPTIONS "https://api.55marcas.com.br/api/auth/sign-in/email" `
+  -H "Origin: https://crm.55marcas.com.br" `
+  -H "Access-Control-Request-Method: POST" `
+  -H "Access-Control-Request-Headers: content-type"
+```
+
+Não adicione `*` a `CORS_ORIGINS`: autenticação usa cookies e exige uma origem
+explícita. Confirme também que a variável foi alterada no serviço/ambiente de
+produção, não em um preview ou em outro serviço Railway.
 
 Adicione `crm.55marcas.com.br` em Custom domains. O `_redirects` incluído garante
 que abrir diretamente `/proposta/TOKEN` e `/contrato/TOKEN` carregue o aplicativo.

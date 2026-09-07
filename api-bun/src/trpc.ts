@@ -11,7 +11,9 @@ import {
   type SQL,
 } from "drizzle-orm";
 import { z } from "zod";
-import { auth, isCrmUserAllowed } from "./auth";
+import { auth } from "./auth";
+import { session as authSession, user } from "./db/auth-schema";
+import { createCrmUser, createCrmUserSchema, crmUserFields, getCrmAccess, resolveCrmRole } from "./lib/crm-users";
 import { getDb } from "./db/client";
 import {
   contacts,
@@ -193,19 +195,27 @@ export async function createTrpcContext(request: Request): Promise<Context> {
 
 const t = initTRPC.context<Context>().create();
 
-const crmProcedure = t.procedure.use(({ ctx, next }) => {
+const crmProcedure = t.procedure.use(async ({ ctx, next }) => {
   if (!ctx.session) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
-  if (!isCrmUserAllowed(ctx.session.user.email)) {
+  const access = await getCrmAccess(ctx.session.user.id);
+  if (!access) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Este usuário não possui acesso ao CRM.",
     });
   }
 
-  return next({ ctx: { ...ctx, session: ctx.session } });
+  return next({ ctx: { ...ctx, session: ctx.session, crmRole: access.role } });
+});
+
+const adminProcedure = crmProcedure.use(({ ctx, next }) => {
+  if (ctx.crmRole !== "ADMIN") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Somente administradores podem gerenciar usuários." });
+  }
+  return next({ ctx });
 });
 
 const listInputSchema = z
@@ -219,6 +229,33 @@ const listInputSchema = z
   .default({ limit: 30, offset: 0 });
 
 const crmRouter = t.router({
+  me: crmProcedure.query(({ ctx }) => ({
+    user: { ...ctx.session.user, crmRole: ctx.crmRole },
+    session: { id: ctx.session.session.id, expiresAt: ctx.session.session.expiresAt },
+  })),
+  users: t.router({
+    list: adminProcedure.query(async () => {
+      const records = await getDb().select(crmUserFields).from(user).orderBy(asc(user.name), asc(user.id));
+      return records.flatMap(record => {
+        const role = resolveCrmRole(record);
+        return role ? [{ ...record, crmRole: role }] : [];
+      });
+    }),
+    create: adminProcedure.input(createCrmUserSchema).mutation(({ input }) => createCrmUser(input, "COLLABORATOR")),
+    setActive: adminProcedure.input(z.object({ id: z.string().min(1), active: z.boolean() }).strict())
+      .mutation(async ({ input, ctx }) => getDb().transaction(async (tx) => {
+        const [target] = await tx.select(crmUserFields).from(user).where(eq(user.id, input.id)).for("update");
+        if (!target || !resolveCrmRole(target)) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Usuário não encontrado." });
+        }
+        if (target.id === ctx.session.user.id || resolveCrmRole(target) === "ADMIN") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "O acesso de administradores não pode ser alterado por esta página." });
+        }
+        await tx.update(user).set({ crmActive: input.active }).where(eq(user.id, input.id));
+        if (!input.active) await tx.delete(authSession).where(eq(authSession.userId, input.id));
+        return { id: input.id, crmActive: input.active };
+      })),
+  }),
   leads: t.router({
     list: crmProcedure.input(listInputSchema).query(async ({ input }) => {
       const db = getDb();

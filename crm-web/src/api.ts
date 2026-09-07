@@ -22,6 +22,7 @@ export const trpc = createTRPCClient<AppRouter>({
 });
 
 export type RouterOutputs = inferRouterOutputs<AppRouter>;
+export type CrmUser = RouterOutputs["crm"]["users"]["list"][number];
 export type LeadListOutput = RouterOutputs["crm"]["leads"]["list"];
 export type LeadDetailOutput = RouterOutputs["crm"]["leads"]["detail"];
 export type LeadStatus = LeadListOutput["items"][number]["status"];
@@ -44,6 +45,7 @@ export type SessionData = {
     name: string;
     email: string;
     image?: string | null;
+    crmRole: "ADMIN" | "COLLABORATOR";
   };
   session: {
     id: string;
@@ -56,7 +58,8 @@ export async function loadSession() {
     credentials: "include",
   });
   if (!response.ok) throw new Error("Não foi possível validar sua sessão.");
-  return (await response.json()) as SessionData | null;
+  if (!await response.json()) return null;
+  return await trpc.crm.me.query();
 }
 
 export async function signIn(email: string, password: string) {
@@ -74,7 +77,9 @@ export async function signIn(email: string, password: string) {
     throw new Error(
       body.message === "Invalid email or password"
         ? "E-mail ou senha incorretos."
-        : body.message || "Não foi possível entrar.",
+        : body.message === "Failed to create session"
+          ? "Seu acesso ao CRM está desativado ou não autorizado. Entre em contato com o administrador."
+          : body.message || "Não foi possível entrar.",
     );
   }
 }

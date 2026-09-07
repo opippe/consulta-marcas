@@ -2,6 +2,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 import { getDb } from "./db/client";
 import * as authSchema from "./db/auth-schema";
+import { resolveCrmRole } from "./lib/crm-users";
 
 const authSecret = process.env.BETTER_AUTH_SECRET?.trim();
 if (!authSecret || authSecret.length < 32) {
@@ -28,17 +29,28 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    disableSignUp: process.env.BETTER_AUTH_ALLOW_SIGN_UP !== "true",
+    disableSignUp: true,
     minPasswordLength: 10,
   },
   trustedOrigins,
+  user: {
+    additionalFields: {
+      crmRole: { type: ["ADMIN", "COLLABORATOR"], required: false, input: false },
+      crmActive: { type: "boolean", defaultValue: true, input: false },
+    },
+  },
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session, context) => {
+          // Use the auth adapter so this read shares any current auth transaction.
+          const record = await context?.context.internalAdapter.findUserById(session.userId);
+          if (!record || !("crmActive" in record) || record.crmActive !== true || !resolveCrmRole({
+            email: record.email,
+            crmRole: "crmRole" in record && (record.crmRole === "ADMIN" || record.crmRole === "COLLABORATOR") ? record.crmRole : null,
+          })) return false;
+        },
+      },
+    },
+  },
 });
-
-export function isCrmUserAllowed(email: string) {
-  const allowedEmails = (process.env.CRM_ALLOWED_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-
-  return allowedEmails.includes(email.trim().toLowerCase());
-}

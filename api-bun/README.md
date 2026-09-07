@@ -26,6 +26,10 @@ solicitação de análise em lead do CRM.
 - `POST /api/leads/interest`
 - `GET|POST /api/auth/*`
 - `GET /trpc/health`
+- `GET /trpc/crm.me`
+- `GET /trpc/crm.users.list` (administrador)
+- `POST /trpc/crm.users.create` (administrador)
+- `POST /trpc/crm.users.setActive` (administrador)
 - `GET /trpc/crm.leads.list`
 - `GET /trpc/crm.leads.detail`
 - `POST /trpc/crm.leads.updateStatus`
@@ -63,9 +67,21 @@ O endpoint de interesse é idempotente e não altera a etapa comercial.
 Validação local com banco migrado: `bun test tests/lead-capture.test.ts`.
 O teste simula a InfoSimples e desfaz todos os registros em uma transação.
 
-As operações do CRM exigem uma sessão válida e também verificam
-`CRM_ALLOWED_EMAILS` no servidor. Desabilitar ou esconder a interface não
-concede acesso aos dados.
+As operações do CRM exigem sessão válida e acesso ativo, verificados no servidor
+a cada requisição. Somente o perfil ADMIN pode gerenciar usuários. O cadastro
+cria uma conta de colaborador com senha protegida pelo hash do Better Auth, sem
+trocar a sessão do administrador. A desativação revoga todas as sessões do
+colaborador e bloqueia novos logins, inclusive uploads/downloads de documentos.
+
+Após aplicar a migração `0009`, execute `bun run admin:create` com
+`CRM_ADMIN_EMAIL` para salvar o perfil ADMIN do usuário existente sem mudar a
+senha. Para contas antigas ainda sem perfil, `CRM_ADMIN_EMAIL` reconhece o
+administrador e `CRM_ALLOWED_EMAILS` mantém os colaboradores autorizados.
+Novos usuários são gerenciados pelo CRM; o cadastro público fica sempre fechado.
+
+Validação direcionada com banco local migrado: `bun test tests/crm-users.test.ts`.
+O teste cobre cadastro/login reais, permissões, duplicidade e revogação, removendo
+ao final apenas as contas temporárias identificadas por UUID.
 
 Os links públicos de proposta usam assinatura HMAC com
 `PROPOSAL_LINK_SECRET`. O banco guarda apenas a versão revogável do token; a

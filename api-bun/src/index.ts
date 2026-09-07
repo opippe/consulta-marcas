@@ -4,7 +4,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
-import { auth, isCrmUserAllowed, trustedOrigins } from "./auth";
+import { auth, trustedOrigins } from "./auth";
+import { getCrmAccess } from "./lib/crm-users";
 import { getDb } from "./db/client";
 import {
   consents,
@@ -99,7 +100,7 @@ const signatureMethodSchema = z.enum(["GOV_BR", "MANUAL"]);
 
 async function getCrmSession(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
-  if (!session || !isCrmUserAllowed(session.user.email)) return null;
+  if (!session || !await getCrmAccess(session.user.id)) return null;
   return session;
 }
 

@@ -79,8 +79,8 @@ A API auxiliar em `worker-api` também encaminha essas rotas para
 Para validar apenas os tipos da landing: `npx tsc -p tsconfig.landing.json`.
 
 O painel em [`crm-web`](./crm-web) é uma aplicação React/Vite separada da
-landing page pública. Ele usa a mesma API Bun, autenticação por sessão e uma
-lista explícita de e-mails autorizados.
+landing page pública. Ele usa a mesma API Bun, autenticação por sessão e
+perfis de administrador e colaborador persistidos no banco.
 
 Depois de copiar as novas variáveis de `api-bun/.env.example` para
 `api-bun/.env`, execute:
@@ -94,6 +94,24 @@ npm run dev:crm
 
 O CRM fica disponível em `http://localhost:3001`. Depois de criar o primeiro
 administrador, remova `CRM_ADMIN_PASSWORD` do arquivo `.env`.
+
+### Usuários do CRM
+
+Administradores encontram **Usuários** na sidebar (`/#/usuarios`) para listar
+a equipe, cadastrar colaboradores com nome, e-mail e senha (10 a 128 caracteres)
+e ativar/desativar acessos. O administrador compartilha as credenciais; o cadastro
+não envia e-mail automaticamente. Desativar revoga as sessões existentes e bloqueia
+o login e as operações protegidas. Colaboradores acessam as operações comerciais,
+mas não podem listar ou gerenciar usuários. Administradores não podem ser
+desativados por essa página.
+
+Para atualizar uma instalação existente, aplique as migrações da API e execute
+`npm run admin:create` com `CRM_ADMIN_EMAIL` definido. Se a conta já existe,
+o comando salva o perfil ADMIN sem modificar sua senha; nome/senha só são
+necessários para criar uma conta nova. Durante a transição, `CRM_ADMIN_EMAIL`
+reconhece o administrador antigo e `CRM_ALLOWED_EMAILS` mantém os colaboradores
+antigos autorizados. Novos cadastros não precisam entrar nessa lista.
+O cadastro público permanece desabilitado.
 
 ### Propostas comerciais
 
