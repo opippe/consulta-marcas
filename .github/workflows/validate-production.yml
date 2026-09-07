@@ -1,0 +1,74 @@
+name: Validate production
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-production-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Build and database checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: crm_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d crm_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Disposable CI database only. No production secrets are needed by this workflow.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/crm_ci
+      DATABASE_MIGRATION_URL: postgresql://postgres:postgres@localhost:5432/crm_ci
+      BETTER_AUTH_SECRET: ci-only-auth-secret-at-least-32-characters
+      PROPOSAL_LINK_SECRET: ci-only-proposal-secret-at-least-32-characters
+      RATE_LIMIT_SALT: ci-only-rate-limit-salt-at-least-32-characters
+      BETTER_AUTH_URL: http://localhost:3100
+      CORS_ORIGINS: http://localhost:3001
+      DOCUMENT_STORAGE_DRIVER: local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.2'
+      - name: Install locked dependencies
+        run: |
+          npm ci
+          bun install --cwd api-bun --frozen-lockfile
+          bun install --cwd crm-web --frozen-lockfile
+      - name: Lint
+        run: npm run lint
+      - name: Detect schema changes missing a migration
+        run: |
+          npm run db:generate:operations
+          if [ -n "$(git status --porcelain -- api-bun/drizzle)" ]; then
+            echo "Schema changed without a committed migration. Run npm run db:generate:operations and commit api-bun/drizzle."
+            git status --short -- api-bun/drizzle
+            exit 1
+          fi
+      - name: Apply migrations to disposable database
+        run: npm run db:migrate:operations
+      - name: Check user access and authentication
+        working-directory: api-bun
+        run: bun test tests/crm-users.test.ts
+      - name: Build both frontends and check API types
+        run: npm run build:production

@@ -2,6 +2,16 @@
 
 ## Publicação em produção
 
+Para atualizações do dia a dia, veja [Deploy automático](deploy/AUTOMATICO.md).
+Com os gatilhos Git habilitados, `git push origin main` publica a API, a landing
+e o CRM; o Railway aplica as migrações pendentes antes de iniciar a nova API.
+`config plan/apply` só é necessário quando a infraestrutura muda.
+
+Quando alterar o schema, execute `npm run db:generate:operations` e inclua
+`api-bun/drizzle` no commit. A validação GitHub verifica migrações, login e builds
+sem acessar produção. Para conferir os builds localmente, use `npm run build:production`
+(as URLs públicas de produção já estão incluídas; não publica nada).
+
 O guia atual está em [deploy/PRODUCAO.md](deploy/PRODUCAO.md):
 Cloudflare Pages (landing e CRM), Railway (API Bun), Neon (Postgres) e R2 (PDFs privados),
 com o domínio `55marcas.com.br`. A seção antiga de GitHub Pages abaixo é legada;

@@ -50,4 +50,5 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+/.railway/*.migrate-backup
 .dev.*.log

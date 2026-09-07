@@ -264,12 +264,6 @@ export default function Home() {
                   <span className={note}>Consulta gratuita</span>
                   <span className={note}>Pesquisa preliminar</span>
                 </div>
-                <a
-                  className={`mt-4 inline-flex text-[0.74rem] font-bold text-ink-soft no-underline transition-colors hover:text-accent-dark hover:underline hover:underline-offset-3 ${focusRing}`}
-                  href="/resultados?preview=resultados"
-                >
-                  Ver um exemplo de resultado <ArrowUpRight className="ml-1" aria-hidden="true" size={14} strokeWidth={2.2} />
-                </a>
               </div>
 
               <div className="mt-4 min-h-8" aria-live="polite">

@@ -1,5 +1,10 @@
 # Publicação da 55 Marcas
 
+Para atualizar uma instalação existente, siga [Deploy automático](AUTOMATICO.md).
+O procedimento longo abaixo é para provisionamento e mudanças de infraestrutura;
+não precisa ser repetido a cada commit. O wrapper `npm run infra:plan` também
+resolve o contorno de `railway.exe` no Windows descrito neste guia.
+
 Este guia prepara a publicação; a existência dos arquivos não significa que os
 serviços remotos já foram criados. Não há dependência de Sites nem do Worker
 legado nessa arquitetura. Não execute `deploy:api`: ele publica outro backend.
