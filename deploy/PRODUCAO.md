@@ -374,6 +374,11 @@ SKIP_DEPENDENCY_INSTALL=true
 
 A instalação explícita evita que a plataforma escolha um gerenciador diferente
 no monorepositório. Use a raiz `/` também no CRM: seu typecheck importa tipos da API.
+O `crm-web` declara `@types/node` e inclui `node` em `tsconfig.json` porque o
+cliente tRPC importa, apenas como tipo, `api-bun/src/trpc`; sem isso o TypeScript
+do CRM percorre o backend e falha em `process`, `Buffer` e `node:crypto`.
+Mantenha `crm-web/bun.lock` sincronizado com `crm-web/package.json` e não remova
+essa dependência para tentar reduzir o build.
 
 ### Projeto landing — nome sugerido `55marcas-site`
 
