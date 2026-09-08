@@ -1,0 +1,52 @@
+/* Shared 55 marcas. palette. Keep operational states distinct from brand accents. */
+:root {
+  --background: #ffffff;
+  --surface: #ffffff;
+  --surface-soft: #f5f5f3;
+  --ink: #000000;
+  --ink-soft: #494949;
+  --muted: #666666;
+  --line: #e2e2df;
+  --line-strong: #b7b7b2;
+  --accent: #ff5a0a;
+  --accent-dark: #ad3900;
+  --accent-soft: #fff0e7;
+  --cta: #b83c00;
+  --cta-dark: #943000;
+  --cta-soft: #fff0e7;
+  --positive: #26745f;
+  --positive-soft: #dceee7;
+  --warning: #91671b;
+  --warning-soft: #fff0c8;
+  --warning-line: #ead6a5;
+  --danger: #b64b3f;
+  --danger-soft: #fbe4df;
+  --ink-on-dark: #d9d6d0;
+  --shadow: 0 1.5rem 3.5rem rgba(27, 39, 50, 0.11);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--ink);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-soft: var(--accent-soft);
+  --color-cta: var(--cta);
+  --color-cta-dark: var(--cta-dark);
+  --color-cta-soft: var(--cta-soft);
+  --color-positive: var(--positive);
+  --color-positive-soft: var(--positive-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-line: var(--warning-line);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-ink-on-dark: var(--ink-on-dark);
+}

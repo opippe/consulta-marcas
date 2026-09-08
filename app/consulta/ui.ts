@@ -1,5 +1,5 @@
 export const focusRing =
-  "focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-[rgba(121,184,150,0.52)] focus-visible:outline-offset-4";
+  "focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-accent-dark focus-visible:outline-offset-4";
 
 export const eyebrow =
   "mb-4 text-[0.68rem] font-bold tracking-[0.16em] text-accent-dark uppercase";

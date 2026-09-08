@@ -14,7 +14,7 @@ export function contactFormData(data: FormData) {
   };
 }
 
-export default function ContactFields() {
+export default function ContactFields({ compact = false }: { compact?: boolean }) {
   return <>
           <div className="grid grid-cols-2 gap-4 max-compact:grid-cols-1">
             <label className="text-[0.74rem] font-bold text-ink">
@@ -54,6 +54,10 @@ export default function ContactFields() {
                 required
               />
             </label>
+          </div>
+          <details className="optional-fields" open={compact ? undefined : true}>
+            <summary>Mais sobre seu negócio <span>(opcional)</span></summary>
+            <div className="grid grid-cols-2 gap-4 max-compact:grid-cols-1 mt-4">
             <label className="text-[0.74rem] font-bold text-ink">
               Possui CNPJ?
               <select className={`${fieldClass} mt-2`} name="hasCnpj" defaultValue="">
@@ -98,7 +102,8 @@ export default function ContactFields() {
                 placeholder="SP"
               />
             </label>
-          </div>
+            </div>
+          </details>
 
           <div className="mt-5 space-y-3 border-t border-line pt-5">
             <label className="flex items-start gap-3 text-[0.72rem] leading-[1.5] text-ink-soft">

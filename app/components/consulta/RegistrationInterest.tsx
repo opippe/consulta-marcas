@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import LeadCaptureForm from "./LeadCaptureForm";
 import { apiPath, sitePath } from "@/app/consulta/paths";
 import { focusRing } from "@/app/consulta/ui";
+import { Check } from "lucide-react";
 
 export default function RegistrationInterest({ searchToken, brandName }: { searchToken: string; brandName: string }) {
   const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
@@ -40,13 +41,13 @@ export default function RegistrationInterest({ searchToken, brandName }: { searc
   }
   if (!captured) return <div id="registrar"><LeadCaptureForm brandName={brandName} searchToken={searchToken} /></div>;
   return (
-    <section id="registrar" className="mt-8 rounded-panel bg-ink px-7 py-6 text-white">
+    <section id="registrar" className="my-4 rounded-panel bg-accent-soft px-7 py-8 text-accent-dark">
       <h2 className="m-0 font-display text-2xl font-semibold">Quer registrar sua marca?</h2>
-      <p className="mt-3 text-base text-ink-on-dark">Solicite o atendimento de um especialista usando os dados que você já informou.</p>
+      <p className="mt-3 text-base text-ink-soft">Solicite o atendimento de um especialista usando os dados que você já informou.</p>
       {state === "saved" ? (
-        <p role="status">Solicitação recebida! Nossa equipe entrará em contato pelo WhatsApp informado.</p>
+        <p role="status" className="mt-4 flex"><Check className="mr-1" /> Solicitação recebida! Nossa equipe entrará em contato pelo WhatsApp informado.</p>
       ) : (
-        <button className={`min-h-12 rounded-lg bg-cta px-5 text-sm font-bold text-white disabled:opacity-60 ${focusRing}`}
+        <button className={`min-h-12 mt-4 cursor-pointer rounded-lg bg-accent px-5 text-sm font-bold text-white hover:bg-accent-dark disabled:opacity-60 ${focusRing}`}
           type="button" disabled={state === "saving"} onClick={() => void requestRegistration()}>
           {state === "saving" ? "Enviando solicitação..." : "Quero registrar minha marca"}
         </button>

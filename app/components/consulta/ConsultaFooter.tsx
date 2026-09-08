@@ -1,59 +1,31 @@
-import { FaInstagram, FaLinkedinIn, FaWhatsapp } from "react-icons/fa";
+import Image from "next/image";
 import Link from "next/link";
-import { brandName, brandSlogan } from "@/app/consulta/brand";
-import MarcaCertaMark from "@/app/components/consulta/MarcaCertaMark";
-import { sitePath } from "@/app/consulta/paths";
+import { FaInstagram, FaLinkedinIn, FaWhatsapp } from "react-icons/fa";
+import { publicAsset, sitePath } from "@/app/consulta/paths";
 import { focusRing } from "@/app/consulta/ui";
 
+// Replace these original platform URLs with the brand profiles when available.
 const socialLinks = [
-  { label: "Instagram", href: "https://www.instagram.com/", Icon: FaInstagram },
+  { label: "Instagram", href: "https://www.instagram.com/55marcas/", Icon: FaInstagram },
   { label: "WhatsApp", href: "https://www.whatsapp.com/", Icon: FaWhatsapp },
   { label: "LinkedIn", href: "https://www.linkedin.com/", Icon: FaLinkedinIn },
-] as const;
+];
 
 export default function ConsultaFooter() {
   return (
-    <footer className="mx-auto w-shell max-w-295 border-t border-line pb-9 pt-8 text-[0.72rem] leading-[1.55] text-muted max-compact:w-shell-mobile">
-      <div className="flex items-start justify-between gap-8 max-tablet:flex-col">
-        <div>
-          <Link
-            className={`inline-flex items-center gap-3 font-bold text-ink no-underline ${focusRing}`}
-            href={sitePath("/")}
-          >
-            <MarcaCertaMark compact />
-            <span>
-              <span className="block font-display text-[1rem] font-semibold">{brandName}</span>
-              <span className="mt-0.5 block text-[0.67rem] font-medium text-muted">
-                {brandSlogan}
-              </span>
-            </span>
-          </Link>
-          <nav className="mt-4 flex items-center gap-2" aria-label="Redes sociais">
+    <footer className="mx-auto mt-20 w-shell max-w-310 border-t border-line pb-8 pt-10 text-xs leading-relaxed text-muted max-compact:w-shell-mobile">
+      <div className="flex items-start justify-between gap-10 max-tablet:flex-col">
+        <div><Link className={`inline-flex min-h-11 items-center ${focusRing}`} href={sitePath("/")}><Image src={publicAsset("/55-marcas-brand-kit/brand/logo-light.svg")} alt="55 marcas. — início" width={180} height={25} unoptimized /></Link><p className="mt-3 text-sm text-ink-soft">Você cria. A gente protege.</p>
+          <nav className="mt-5 flex flex-wrap gap-3" aria-label="Redes sociais">
             {socialLinks.map(({ label, href, Icon }) => (
-              <a
-                className={`inline-flex size-9 items-center justify-center rounded-lg border border-line bg-surface text-muted no-underline transition-[background-color,border-color,color,transform] duration-160 ease-out hover:-translate-y-px hover:border-accent-dark hover:bg-accent-soft hover:text-accent-dark ${focusRing}`}
-                href={href}
-                key={label}
-                aria-label={label}
-                title={label}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Icon size={17} aria-hidden="true" />
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={`${label} (abre em nova aba)`} title={label}
+                className={`inline-flex size-11 items-center justify-center rounded-full border border-line-strong bg-surface text-ink transition-colors duration-150 hover:border-ink hover:bg-ink hover:text-white focus-visible:bg-ink focus-visible:text-white ${focusRing}`}>
+                <Icon size={19} aria-hidden="true" />
               </a>
             ))}
           </nav>
         </div>
-        <div className="max-w-145 text-right max-tablet:max-w-160 max-tablet:text-left">
-          <p className="m-0">
-            Os dados da consulta são informativos e não substituem uma análise
-            especializada ou a garantia de registro.
-          </p>
-          <p className="mb-0 mt-2 text-[0.67rem] text-muted">
-            © {new Date().getFullYear()} {brandName}. Todos os direitos
-            reservados.
-          </p>
-        </div>
+        <p className="m-0 max-w-120">A consulta é informativa e preliminar. Não substitui uma análise especializada e não garante o registro da marca.</p>
       </div>
     </footer>
   );

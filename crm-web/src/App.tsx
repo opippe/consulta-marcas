@@ -1,3 +1,6 @@
+import logoLight from "../../public/55-marcas-brand-kit/brand/logo-light.svg";
+import logoDark from "../../public/55-marcas-brand-kit/brand/logo-dark.svg";
+import brandIcon from "../../public/55-marcas-brand-kit/brand/icon.svg";
 import {
   ArrowRight,
   BarChart3,
@@ -19,6 +22,7 @@ import {
   Plus,
   Search,
   ShieldCheck,
+  Settings2,
   Sparkles,
   Send,
   Trash2,
@@ -56,6 +60,7 @@ import {
   type SessionData,
 } from "./api";
 import { downloadContractPdf } from "./contract-pdf";
+import { AccountPage } from "./AccountPage";
 import { UsersPage } from "./UsersPage";
 import {
   ContractDocumentUploadDialog,
@@ -71,32 +76,32 @@ const STATUS_META: Record<
   NEW: {
     label: "Novo lead",
     shortLabel: "Novos",
-    className: "bg-[#e3f0e8] text-[#26745f]",
+    className: "bg-accent-soft text-accent-dark",
   },
   CONTACTED: {
     label: "Contato iniciado",
     shortLabel: "Contato",
-    className: "bg-[#e8eef1] text-[#46545e]",
+    className: "bg-surface-soft text-ink-soft",
   },
   QUALIFIED: {
     label: "Qualificado",
     shortLabel: "Qualificados",
-    className: "bg-[#ddf4e6] text-[#167548]",
+    className: "bg-positive-soft text-positive",
   },
   PROPOSAL: {
     label: "Proposta enviada",
     shortLabel: "Propostas",
-    className: "bg-[#fff0c8] text-[#91671b]",
+    className: "bg-warning-soft text-warning",
   },
   WON: {
     label: "Fechado",
     shortLabel: "Fechados",
-    className: "bg-[#dceee7] text-[#173f35]",
+    className: "bg-positive-soft text-positive",
   },
   LOST: {
     label: "Perdido",
     shortLabel: "Perdidos",
-    className: "bg-[#fbe4df] text-[#b64b3f]",
+    className: "bg-danger-soft text-danger",
   },
 };
 
@@ -174,31 +179,20 @@ function sourceLabel(lead: LeadItem) {
   return lead.source === "LANDING_PAGE" ? "Landing page" : lead.source;
 }
 
-function Logo({ compact = false }: { compact?: boolean }) {
+function Logo({ compact = false, inverted = false, operations = false }: { compact?: boolean; inverted?: boolean; operations?: boolean }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative grid size-10 shrink-0 place-items-center rounded-xl bg-[#173f35] text-lg font-bold text-[#fffdfa]">
-        55
-        <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-[#79b896]" />
-      </div>
-      {!compact && (
-        <div>
-          <p className="font-display m-0 text-base font-bold tracking-[-0.02em] text-[#173f35]">
-            55 Marcas
-          </p>
-          <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.17em] text-[#707b81]">
-            Operações
-          </p>
-        </div>
-      )}
+    <div className="min-w-0">
+      {/* eslint-disable-next-line @next/next/no-img-element -- CRM uses Vite and local SVG assets, not Next.js. */}
+      <img className={compact ? "crm-brand-compact" : "crm-brand"} src={compact ? brandIcon : inverted ? logoDark : logoLight} alt="55 marcas." width={compact ? 40 : 170} height={compact ? 40 : 24} />
+      {!compact && operations && <p className={`m-0 mt-3 text-[11px] font-medium uppercase tracking-[0.12em] ${inverted ? "text-ink-on-dark" : "text-muted"}`}>Operações</p>}
     </div>
   );
 }
 
 function Splash() {
   return (
-    <main className="grid min-h-screen place-items-center bg-[#173f35]">
-      <div className="flex items-center gap-3 text-[#fffdfa]">
+    <main className="grid min-h-screen place-items-center bg-ink">
+      <div className="flex items-center gap-3 text-surface">
         <LoaderCircle className="size-5 animate-spin" />
         <span className="text-sm font-semibold">Carregando o CRM...</span>
       </div>
@@ -230,28 +224,28 @@ function Login({ onSuccess }: { onSuccess: (session: SessionData) => void }) {
 
   return (
     <main className="grid min-h-screen lg:grid-cols-[minmax(360px,0.8fr)_1.2fr]">
-      <section className="flex min-h-screen items-center bg-[#fffdfa] px-6 py-10 sm:px-12 lg:px-[clamp(3rem,7vw,7rem)]">
+      <section className="flex min-h-screen items-center bg-surface px-6 py-10 sm:px-12 lg:px-[clamp(3rem,7vw,7rem)]">
         <div className="mx-auto w-full max-w-md animate-enter">
-          <Logo />
+          <Logo operations />
           <div className="mt-16">
-            <p className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-[#26745f]">
+            <p className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-accent-dark">
               Acesso interno
             </p>
-            <h1 className="font-display m-0 text-4xl font-bold tracking-[-0.04em] text-[#173f35]">
-              Bem-vindo de volta.
+            <h1 className="font-display m-0 text-4xl font-bold tracking-[-0.04em] text-ink">
+              Bem-vindo de volta<span className="text-accent">.</span>
             </h1>
-            <p className="mt-4 text-base leading-7 text-[#707b81]">
+            <p className="mt-4 text-base leading-7 text-muted">
               Entre para acompanhar os novos pedidos de análise e mover oportunidades pelo funil.
             </p>
           </div>
 
           <form className="mt-10 space-y-5" onSubmit={handleSubmit}>
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#46545e]">
+              <span className="mb-2 block text-sm font-semibold text-ink-soft">
                 E-mail
               </span>
               <input
-                className="focus-ring h-12 w-full rounded-xl border border-[#d9d8d0] bg-white px-4 text-[#173f35] outline-none transition focus:border-[#79b896]"
+                className="focus-ring h-12 w-full rounded-xl border border-line bg-white px-4 text-ink outline-none transition focus:border-accent"
                 type="email"
                 autoComplete="email"
                 required
@@ -261,11 +255,11 @@ function Login({ onSuccess }: { onSuccess: (session: SessionData) => void }) {
               />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#46545e]">
+              <span className="mb-2 block text-sm font-semibold text-ink-soft">
                 Senha
               </span>
               <input
-                className="focus-ring h-12 w-full rounded-xl border border-[#d9d8d0] bg-white px-4 text-[#173f35] outline-none transition focus:border-[#79b896]"
+                className="focus-ring h-12 w-full rounded-xl border border-line bg-white px-4 text-ink outline-none transition focus:border-accent"
                 type="password"
                 autoComplete="current-password"
                 required
@@ -276,12 +270,12 @@ function Login({ onSuccess }: { onSuccess: (session: SessionData) => void }) {
               />
             </label>
             {error && (
-              <p className="rounded-xl bg-[#fbe4df] px-4 py-3 text-sm text-[#b64b3f]" role="alert">
+              <p className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
                 {error}
               </p>
             )}
             <button
-              className="focus-ring flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2fbf73] font-bold text-[#173f35] transition hover:bg-[#27aa65] disabled:cursor-wait disabled:opacity-70"
+              className="focus-ring text-white flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent font-bold text-ink transition hover:bg-accent-dark hover:text-white disabled:cursor-wait disabled:opacity-70"
               type="submit"
               disabled={loading}
             >
@@ -292,22 +286,22 @@ function Login({ onSuccess }: { onSuccess: (session: SessionData) => void }) {
         </div>
       </section>
 
-      <section className="relative hidden overflow-hidden bg-[#173f35] p-12 text-[#fffdfa] lg:flex lg:flex-col lg:justify-between">
-        <div className="absolute -right-24 -top-24 size-80 rounded-full border-[48px] border-[#79b896]/10" />
-        <div className="relative ml-auto flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#d9d6d0]">
-          <span className="size-2 rounded-full bg-[#2fbf73]" />
+      <section className="crm-login-art relative hidden overflow-hidden bg-ink p-12 text-surface lg:flex lg:flex-col lg:justify-between">
+
+        <div className="relative ml-auto flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-ink-on-dark">
+          <span className="size-2 rounded-full bg-accent" />
           Operação centralizada
         </div>
         <div className="relative max-w-2xl">
-          <Sparkles className="mb-8 size-8 text-[#79b896]" />
+          <Sparkles className="mb-8 size-8 text-accent" />
           <blockquote className="font-display m-0 text-[clamp(2.2rem,4vw,4.6rem)] font-semibold leading-[1.06] tracking-[-0.045em]">
-            Cada consulta já pode nascer como uma oportunidade organizada.
+            Clareza para acompanhar.<br />Cuidado para proteger<span className="text-accent">.</span>
           </blockquote>
-          <p className="mt-8 max-w-lg text-lg leading-8 text-[#d9d6d0]">
+          <p className="mt-8 max-w-lg text-lg leading-8 text-ink-on-dark">
             Da primeira busca ao pedido no INPI, com contexto e histórico no mesmo lugar.
           </p>
         </div>
-        <p className="relative text-xs font-semibold uppercase tracking-[0.15em] text-[#79b896]">
+        <p className="relative text-xs font-semibold uppercase tracking-[0.15em] text-accent">
           Você cria. A gente protege.
         </p>
       </section>
@@ -339,18 +333,19 @@ function MetricCard({
 }) {
   return (
     <button
-      className={`focus-ring rounded-2xl border p-5 text-left transition hover:-translate-y-0.5 hover:border-[#79b896] ${
+      aria-pressed={active}
+      className={`focus-ring min-w-0 rounded-xl border p-5 text-left transition hover:-translate-y-0.5 hover:border-accent ${
         active
-          ? "border-[#79b896] bg-[#e3f0e8]"
-          : "border-[#d9d8d0] bg-[#fffdfa]"
+          ? "border-accent bg-accent-soft"
+          : "border-line bg-surface"
       }`}
       onClick={onClick}
     >
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-[#707b81]">{label}</span>
-        <Icon className="size-4 text-[#26745f]" />
+        <span className="text-sm font-semibold text-muted">{label}</span>
+        <Icon className="size-4 text-accent-dark" />
       </div>
-      <strong className="font-display mt-4 block text-3xl tracking-[-0.04em] text-[#173f35]">
+      <strong className="font-display mt-4 block tabular-nums text-3xl tracking-[-0.04em] text-ink">
         {value}
       </strong>
     </button>
@@ -361,13 +356,13 @@ function EmptyState({ filtered }: { filtered: boolean }) {
   return (
     <div className="grid min-h-80 place-items-center p-8 text-center">
       <div>
-        <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-[#e3f0e8]">
-          <FileSearch className="size-6 text-[#26745f]" />
+        <div className="mx-auto grid size-14 place-items-center rounded-xl bg-accent-soft">
+          <FileSearch className="size-6 text-accent-dark" />
         </div>
-        <h3 className="font-display mt-5 text-xl font-bold text-[#173f35]">
+        <h3 className="font-display mt-5 text-xl font-bold text-ink">
           {filtered ? "Nenhum lead neste filtro" : "Os novos leads aparecerão aqui"}
         </h3>
-        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#707b81]">
+        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted">
           {filtered
             ? "Tente outro termo ou selecione uma etapa diferente."
             : "Assim que alguém concluir o formulário após uma consulta, o cadastro entrará automaticamente no CRM."}
@@ -387,13 +382,13 @@ function InfoCard({
   value: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-[#d9d8d0] bg-white p-4">
-      <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#e3f0e8]">
-        <Icon className="size-4 text-[#26745f]" />
+    <div className="flex items-center gap-3 rounded-xl border border-line bg-white p-4">
+      <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent-soft">
+        <Icon className="size-4 text-accent-dark" />
       </div>
       <div className="min-w-0">
-        <p className="m-0 text-xs text-[#707b81]">{label}</p>
-        <p className="m-0 mt-0.5 truncate text-sm font-bold text-[#173f35]">{value}</p>
+        <p className="m-0 text-xs text-muted">{label}</p>
+        <p className="m-0 mt-0.5 truncate text-sm font-bold text-ink">{value}</p>
       </div>
     </div>
   );
@@ -401,9 +396,9 @@ function InfoCard({
 
 function DetailCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-[#fffdfa] p-4">
-      <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[#707b81]">{label}</p>
-      <p className="m-0 mt-1.5 text-sm font-semibold text-[#173f35]">{value}</p>
+    <div className="bg-surface p-4">
+      <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
+      <p className="m-0 mt-1.5 text-sm font-semibold text-ink">{value}</p>
     </div>
   );
 }
@@ -419,23 +414,23 @@ const PROPOSAL_STATUS_META: Record<
   ProposalRecord["status"],
   { label: string; className: string }
 > = {
-  DRAFT: { label: "Rascunho", className: "bg-[#eeebe3] text-[#46545e]" },
-  SENT: { label: "Enviada", className: "bg-[#fff0c8] text-[#91671b]" },
-  ACCEPTED: { label: "Aceita", className: "bg-[#dceee7] text-[#26745f]" },
-  REJECTED: { label: "Recusada", className: "bg-[#fbe4df] text-[#b64b3f]" },
-  EXPIRED: { label: "Expirada", className: "bg-[#eeebe3] text-[#707b81]" },
-  CANCELED: { label: "Cancelada", className: "bg-[#fbe4df] text-[#b64b3f]" },
+  DRAFT: { label: "Rascunho", className: "bg-surface-soft text-ink-soft" },
+  SENT: { label: "Enviada", className: "bg-warning-soft text-warning" },
+  ACCEPTED: { label: "Aceita", className: "bg-positive-soft text-positive" },
+  REJECTED: { label: "Recusada", className: "bg-danger-soft text-danger" },
+  EXPIRED: { label: "Expirada", className: "bg-surface-soft text-muted" },
+  CANCELED: { label: "Cancelada", className: "bg-danger-soft text-danger" },
 };
 
 const CONTRACT_STATUS_META: Record<
   ContractRecord["status"],
   { label: string; className: string }
 > = {
-  DRAFT: { label: "Rascunho", className: "bg-[#eeebe3] text-[#46545e]" },
-  SENT: { label: "Enviado", className: "bg-[#fff0c8] text-[#91671b]" },
-  SIGNED: { label: "Assinado externamente", className: "bg-[#dceee7] text-[#26745f]" },
-  CANCELED: { label: "Cancelado", className: "bg-[#fbe4df] text-[#b64b3f]" },
-  EXPIRED: { label: "Expirado", className: "bg-[#eeebe3] text-[#707b81]" },
+  DRAFT: { label: "Rascunho", className: "bg-surface-soft text-ink-soft" },
+  SENT: { label: "Enviado", className: "bg-warning-soft text-warning" },
+  SIGNED: { label: "Assinado externamente", className: "bg-positive-soft text-positive" },
+  CANCELED: { label: "Cancelado", className: "bg-danger-soft text-danger" },
+  EXPIRED: { label: "Expirado", className: "bg-surface-soft text-muted" },
 };
 
 function moneyInputToCents(value: string) {
@@ -561,28 +556,28 @@ function ProposalEditor({
 
   return (
     <div
-      className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-[#173f35]/45 p-3 backdrop-blur-[2px] sm:p-6"
+      className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-ink/45 p-3 backdrop-blur-[2px] sm:p-6"
       onMouseDown={(event) => {
         event.stopPropagation();
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <form
-        className="my-auto w-full max-w-3xl overflow-hidden rounded-2xl bg-[#fffdfa] shadow-2xl animate-enter"
+        className="my-auto w-full max-w-3xl overflow-hidden rounded-xl bg-surface shadow-2xl animate-enter"
         onSubmit={handleSubmit}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header className="flex items-center justify-between border-b border-[#d9d8d0] px-5 py-4 sm:px-7">
+        <header className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-7">
           <div>
-            <p className="m-0 text-xs font-bold uppercase tracking-[0.14em] text-[#26745f]">
+            <p className="m-0 text-xs font-bold uppercase tracking-[0.14em] text-accent-dark">
               {proposal ? formatProposalNumber(proposal.number) : "Nova proposta"}
             </p>
-            <h3 className="font-display m-0 mt-1 text-xl font-bold text-[#173f35]">
+            <h3 className="font-display m-0 mt-1 text-xl font-bold text-ink">
               {brandName}
             </h3>
           </div>
           <button
-            className="focus-ring grid size-10 place-items-center rounded-xl border border-[#d9d8d0] hover:bg-[#eeebe3]"
+            className="focus-ring grid size-10 place-items-center rounded-xl border border-line hover:bg-surface-soft"
             type="button"
             onClick={onClose}
             aria-label="Fechar editor"
@@ -595,13 +590,13 @@ function ProposalEditor({
           <section>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h4 className="m-0 text-sm font-bold text-[#173f35]">Serviços e valores</h4>
-                <p className="m-0 mt-1 text-xs text-[#707b81]">
+                <h4 className="m-0 text-sm font-bold text-ink">Serviços e valores</h4>
+                <p className="m-0 mt-1 text-xs text-muted">
                   Separe honorários, taxas e serviços adicionais quando necessário.
                 </p>
               </div>
               <button
-                className="focus-ring flex shrink-0 items-center gap-1.5 rounded-lg border border-[#b8c0bd] px-3 py-2 text-xs font-bold text-[#26745f] hover:bg-[#e3f0e8]"
+                className="focus-ring flex shrink-0 items-center gap-1.5 rounded-lg border border-accent-dark px-3 py-2 text-xs font-bold text-accent-dark hover:bg-accent-soft"
                 type="button"
                 onClick={() =>
                   setItems((current) => [
@@ -622,15 +617,15 @@ function ProposalEditor({
             <div className="mt-4 space-y-3">
               {items.map((item, index) => (
                 <div
-                  className="grid gap-3 rounded-xl border border-[#d9d8d0] bg-white p-4 sm:grid-cols-[1fr_90px_140px_36px]"
+                  className="grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-[1fr_90px_140px_36px]"
                   key={item.key}
                 >
                   <label>
-                    <span className="mb-1.5 block text-xs font-semibold text-[#707b81]">
+                    <span className="mb-1.5 block text-xs font-semibold text-muted">
                       Descrição
                     </span>
                     <input
-                      className="focus-ring h-10 w-full rounded-lg border border-[#d9d8d0] px-3 text-sm outline-none"
+                      className="focus-ring h-10 w-full rounded-lg border border-line px-3 text-sm outline-none"
                       required
                       minLength={3}
                       maxLength={300}
@@ -641,11 +636,11 @@ function ProposalEditor({
                     />
                   </label>
                   <label>
-                    <span className="mb-1.5 block text-xs font-semibold text-[#707b81]">
+                    <span className="mb-1.5 block text-xs font-semibold text-muted">
                       Qtd.
                     </span>
                     <input
-                      className="focus-ring h-10 w-full rounded-lg border border-[#d9d8d0] px-3 text-sm outline-none"
+                      className="focus-ring h-10 w-full rounded-lg border border-line px-3 text-sm outline-none"
                       type="number"
                       min={1}
                       max={50}
@@ -661,11 +656,11 @@ function ProposalEditor({
                     />
                   </label>
                   <label>
-                    <span className="mb-1.5 block text-xs font-semibold text-[#707b81]">
+                    <span className="mb-1.5 block text-xs font-semibold text-muted">
                       Valor unitário
                     </span>
-                    <div className="flex h-10 items-center rounded-lg border border-[#d9d8d0] px-3 focus-within:border-[#79b896]">
-                      <span className="mr-1 text-xs text-[#707b81]">R$</span>
+                    <div className="flex h-10 items-center rounded-lg border border-line px-3 focus-within:border-accent">
+                      <span className="mr-1 text-xs text-muted">R$</span>
                       <input
                         className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none"
                         inputMode="decimal"
@@ -679,7 +674,7 @@ function ProposalEditor({
                     </div>
                   </label>
                   <button
-                    className="focus-ring mt-auto grid size-9 place-items-center rounded-lg text-[#b64b3f] hover:bg-[#fbe4df] disabled:cursor-not-allowed disabled:opacity-30"
+                    className="focus-ring mt-auto grid size-9 place-items-center rounded-lg text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-30"
                     type="button"
                     disabled={items.length === 1}
                     onClick={() =>
@@ -698,11 +693,11 @@ function ProposalEditor({
 
           <section className="grid gap-4 sm:grid-cols-2">
             <label>
-              <span className="mb-1.5 block text-xs font-semibold text-[#707b81]">
+              <span className="mb-1.5 block text-xs font-semibold text-muted">
                 Válida até
               </span>
               <input
-                className="focus-ring h-11 w-full rounded-xl border border-[#d9d8d0] bg-white px-3 text-sm outline-none"
+                className="focus-ring h-11 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none"
                 type="date"
                 required
                 value={validUntil}
@@ -710,11 +705,11 @@ function ProposalEditor({
               />
             </label>
             <label>
-              <span className="mb-1.5 block text-xs font-semibold text-[#707b81]">
+              <span className="mb-1.5 block text-xs font-semibold text-muted">
                 Desconto
               </span>
-              <div className="flex h-11 items-center rounded-xl border border-[#d9d8d0] bg-white px-3 focus-within:border-[#79b896]">
-                <span className="mr-1 text-xs text-[#707b81]">R$</span>
+              <div className="flex h-11 items-center rounded-xl border border-line bg-white px-3 focus-within:border-accent">
+                <span className="mr-1 text-xs text-muted">R$</span>
                 <input
                   className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none"
                   inputMode="decimal"
@@ -726,11 +721,11 @@ function ProposalEditor({
           </section>
 
           <label className="block">
-            <span className="mb-1.5 block text-xs font-semibold text-[#707b81]">
+            <span className="mb-1.5 block text-xs font-semibold text-muted">
               Observações
             </span>
             <textarea
-              className="focus-ring min-h-24 w-full resize-y rounded-xl border border-[#d9d8d0] bg-white p-3 text-sm outline-none"
+              className="focus-ring min-h-24 w-full resize-y rounded-xl border border-line bg-white p-3 text-sm outline-none"
               maxLength={2000}
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
@@ -738,42 +733,42 @@ function ProposalEditor({
             />
           </label>
 
-          <div className="rounded-2xl bg-[#e3f0e8] p-5">
-            <div className="flex justify-between text-sm text-[#46545e]">
+          <div className="rounded-xl bg-accent-soft p-5">
+            <div className="flex justify-between text-sm text-ink-soft">
               <span>Subtotal</span>
               <span>{formatMoney(subtotalCents)}</span>
             </div>
             {discountCents > 0 && (
-              <div className="mt-2 flex justify-between text-sm text-[#46545e]">
+              <div className="mt-2 flex justify-between text-sm text-ink-soft">
                 <span>Desconto</span>
                 <span>- {formatMoney(discountCents)}</span>
               </div>
             )}
-            <div className="mt-4 flex items-end justify-between border-t border-[#79b896]/50 pt-4">
-              <strong className="text-sm text-[#173f35]">Total da proposta</strong>
-              <strong className="font-display text-2xl text-[#173f35]">
+            <div className="mt-4 flex items-end justify-between border-t border-accent/50 pt-4">
+              <strong className="text-sm text-ink">Total da proposta</strong>
+              <strong className="font-display text-2xl text-ink">
                 {formatMoney(totalCents)}
               </strong>
             </div>
           </div>
 
           {error && (
-            <p className="rounded-xl bg-[#fbe4df] px-4 py-3 text-sm text-[#b64b3f]" role="alert">
+            <p className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
               {error}
             </p>
           )}
         </div>
 
-        <footer className="flex items-center justify-end gap-3 border-t border-[#d9d8d0] px-5 py-4 sm:px-7">
+        <footer className="flex items-center justify-end gap-3 border-t border-line px-5 py-4 sm:px-7">
           <button
-            className="focus-ring h-11 rounded-xl px-4 text-sm font-bold text-[#46545e] hover:bg-[#eeebe3]"
+            className="focus-ring h-11 rounded-xl px-4 text-sm font-bold text-ink-soft hover:bg-surface-soft"
             type="button"
             onClick={onClose}
           >
             Cancelar
           </button>
           <button
-            className="focus-ring flex h-11 items-center gap-2 rounded-xl bg-[#2fbf73] px-5 text-sm font-bold text-[#173f35] hover:bg-[#27aa65] disabled:cursor-wait disabled:opacity-60"
+            className="focus-ring text-white flex h-11 items-center gap-2 rounded-xl bg-accent px-5 text-sm font-bold text-ink hover:bg-accent-dark hover:text-white disabled:cursor-wait disabled:opacity-60"
             type="submit"
             disabled={saving}
           >
@@ -845,28 +840,28 @@ function ContractEditor({
 
   return (
     <div
-      className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-[#173f35]/45 p-3 backdrop-blur-[2px] sm:p-6"
+      className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-ink/45 p-3 backdrop-blur-[2px] sm:p-6"
       onMouseDown={(event) => {
         event.stopPropagation();
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <form
-        className="my-auto w-full max-w-4xl overflow-hidden rounded-2xl bg-[#fffdfa] shadow-2xl animate-enter"
+        className="my-auto w-full max-w-4xl overflow-hidden rounded-xl bg-surface shadow-2xl animate-enter"
         onSubmit={handleSubmit}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header className="flex items-center justify-between border-b border-[#d9d8d0] px-5 py-4 sm:px-7">
+        <header className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-7">
           <div>
-            <p className="m-0 text-xs font-bold uppercase tracking-[0.14em] text-[#26745f]">
+            <p className="m-0 text-xs font-bold uppercase tracking-[0.14em] text-accent-dark">
               {formatContractNumber(contract.number)} · Rascunho
             </p>
-            <h3 className="font-display m-0 mt-1 text-xl font-bold text-[#173f35]">
+            <h3 className="font-display m-0 mt-1 text-xl font-bold text-ink">
               Editar contrato
             </h3>
           </div>
           <button
-            className="focus-ring grid size-10 place-items-center rounded-xl border border-[#d9d8d0] hover:bg-[#eeebe3]"
+            className="focus-ring grid size-10 place-items-center rounded-xl border border-line hover:bg-surface-soft"
             type="button"
             onClick={onClose}
             aria-label="Fechar editor"
@@ -876,18 +871,18 @@ function ContractEditor({
         </header>
 
         <div className="max-h-[calc(100vh-11rem)] space-y-5 overflow-y-auto px-5 py-5 sm:px-7">
-          <div className="rounded-xl border border-[#b8c0bd] bg-[#e3f0e8]/55 px-4 py-3 text-sm leading-6 text-[#46545e]">
+          <div className="rounded-xl border border-line-strong bg-accent-soft/55 px-4 py-3 text-sm leading-6 text-ink-soft">
             Edite livremente o instrumento antes do primeiro envio. Depois que o
             contrato for enviado, ele fica bloqueado para preservar o conteúdo
             que o cliente recebeu.
           </div>
 
           <label className="block">
-            <span className="mb-1.5 block text-xs font-semibold text-[#707b81]">
+            <span className="mb-1.5 block text-xs font-semibold text-muted">
               Título do documento
             </span>
             <input
-              className="focus-ring h-11 w-full rounded-xl border border-[#d9d8d0] bg-white px-3 text-sm outline-none"
+              className="focus-ring h-11 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none"
               required
               minLength={10}
               maxLength={200}
@@ -898,15 +893,15 @@ function ContractEditor({
 
           <label className="block">
             <div className="flex items-center justify-between gap-3">
-              <span className="mb-1.5 block text-xs font-semibold text-[#707b81]">
+              <span className="mb-1.5 block text-xs font-semibold text-muted">
                 Conteúdo do contrato
               </span>
-              <span className="text-[11px] text-[#707b81]">
+              <span className="text-[11px] text-muted">
                 {content.length.toLocaleString("pt-BR")} / 40.000
               </span>
             </div>
             <textarea
-              className="focus-ring min-h-[32rem] w-full resize-y rounded-xl border border-[#d9d8d0] bg-white p-4 font-mono text-[13px] leading-6 text-[#173f35] outline-none"
+              className="focus-ring min-h-[32rem] w-full resize-y rounded-xl border border-line bg-white p-4 font-mono text-[13px] leading-6 text-ink outline-none"
               required
               minLength={80}
               maxLength={40_000}
@@ -916,22 +911,22 @@ function ContractEditor({
           </label>
 
           {error && (
-            <p className="rounded-xl bg-[#fbe4df] px-4 py-3 text-sm text-[#b64b3f]" role="alert">
+            <p className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
               {error}
             </p>
           )}
         </div>
 
-        <footer className="flex items-center justify-end gap-3 border-t border-[#d9d8d0] px-5 py-4 sm:px-7">
+        <footer className="flex items-center justify-end gap-3 border-t border-line px-5 py-4 sm:px-7">
           <button
-            className="focus-ring h-11 rounded-xl px-4 text-sm font-bold text-[#46545e] hover:bg-[#eeebe3]"
+            className="focus-ring h-11 rounded-xl px-4 text-sm font-bold text-ink-soft hover:bg-surface-soft"
             type="button"
             onClick={onClose}
           >
             Cancelar
           </button>
           <button
-            className="focus-ring flex h-11 items-center gap-2 rounded-xl bg-[#2fbf73] px-5 text-sm font-bold text-[#173f35] hover:bg-[#27aa65] disabled:cursor-wait disabled:opacity-60"
+            className="focus-ring flex h-11 items-center gap-2 rounded-xl bg-accent px-5 text-sm font-bold hover:bg-accent-dark text-white disabled:cursor-wait disabled:opacity-60"
             type="submit"
             disabled={saving}
           >
@@ -1213,44 +1208,44 @@ function LeadDrawer({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-[#173f35]/30 backdrop-blur-[2px]" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 flex justify-end bg-ink/30 backdrop-blur-[2px]" onMouseDown={onClose}>
       <aside
-        className="h-full w-full max-w-2xl overflow-y-auto bg-[#fffdfa] shadow-2xl animate-enter"
+        className="h-full w-full max-w-2xl overflow-y-auto bg-surface shadow-2xl animate-enter"
         onMouseDown={(event) => event.stopPropagation()}
         aria-label="Detalhes do lead"
       >
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[#d9d8d0] bg-[#fffdfa]/95 px-5 py-4 backdrop-blur sm:px-8">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-surface/95 px-5 py-4 backdrop-blur sm:px-8">
           <div>
-            <p className="m-0 text-xs font-bold uppercase tracking-[0.14em] text-[#26745f]">
+            <p className="m-0 text-xs font-bold uppercase tracking-[0.14em] text-accent-dark">
               Detalhes da oportunidade
             </p>
-            <h2 className="font-display m-0 mt-1 text-xl font-bold text-[#173f35]">
+            <h2 className="font-display m-0 mt-1 text-xl font-bold text-ink">
               {data?.lead.brandName ?? "Carregando..."}
             </h2>
           </div>
-          <button className="focus-ring grid size-10 place-items-center rounded-xl border border-[#d9d8d0] hover:bg-[#eeebe3]" onClick={onClose} aria-label="Fechar">
+          <button className="focus-ring grid size-10 place-items-center rounded-xl border border-line hover:bg-surface-soft" onClick={onClose} aria-label="Fechar">
             <X className="size-5" />
           </button>
         </header>
 
         {error && (
-          <p className="mx-5 mt-5 rounded-xl bg-[#fbe4df] px-4 py-3 text-sm text-[#b64b3f] sm:mx-8">
+          <p className="mx-5 mt-5 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger sm:mx-8">
             {error}
           </p>
         )}
 
         {!data && !error && (
           <div className="grid min-h-80 place-items-center">
-            <LoaderCircle className="size-6 animate-spin text-[#26745f]" />
+            <LoaderCircle className="size-6 animate-spin text-accent-dark" />
           </div>
         )}
 
         {data && (
           <div className="space-y-8 px-5 py-6 sm:px-8">
-            <section className="rounded-2xl bg-[#173f35] p-5 text-[#fffdfa]">
+            <section className="rounded-xl bg-ink p-5 text-surface">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="m-0 text-sm text-[#d9d6d0]">Etapa atual</p>
+                  <p className="m-0 text-sm text-ink-on-dark">Etapa atual</p>
                   <p className="font-display m-0 mt-1 text-2xl font-bold">
                     {STATUS_META[data.lead.status].label}
                   </p>
@@ -1262,26 +1257,26 @@ function LeadDrawer({
                   onChange={(event) => void updateStatus(event.target.value as LeadStatus)}
                 >
                   {STATUS_ORDER.map((status) => (
-                    <option className="text-[#173f35]" value={status} key={status}>
+                    <option className="text-ink" value={status} key={status}>
                       {STATUS_META[status].label}
                     </option>
                   ))}
                 </select>
               </div>
-              <div className="mt-5 flex items-center gap-2 text-xs text-[#79b896]">
+              <div className="mt-5 flex items-center gap-2 text-xs text-accent">
                 {saving ? <LoaderCircle className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
                 Toda mudança fica registrada no histórico
               </div>
             </section>
 
             <section>
-              <h3 className="font-display m-0 text-lg font-bold text-[#173f35]">Contato</h3>
+              <h3 className="font-display m-0 text-lg font-bold text-ink">Contato</h3>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <InfoCard icon={UserRound} label="Nome" value={data.lead.contactName} />
                 <InfoCard icon={MessageCircle} label="WhatsApp" value={data.lead.whatsapp} />
               </div>
               <a
-                className="focus-ring mt-3 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2fbf73] text-sm font-bold text-[#173f35] transition hover:bg-[#27aa65]"
+                className="focus-ring text-white mt-3 flex h-11 items-center justify-center gap-2 rounded-xl bg-accent text-sm font-bold text-ink transition hover:bg-accent-dark hover:text-white"
                 href={whatsappUrl(data.lead.whatsapp)}
                 target="_blank"
                 rel="noreferrer"
@@ -1292,8 +1287,8 @@ function LeadDrawer({
             </section>
 
             <section>
-              <h3 className="font-display m-0 text-lg font-bold text-[#173f35]">Intenção de registro</h3>
-              <div className="mt-4 grid gap-px overflow-hidden rounded-2xl border border-[#d9d8d0] bg-[#d9d8d0] sm:grid-cols-2">
+              <h3 className="font-display m-0 text-lg font-bold text-ink">Intenção de registro</h3>
+              <div className="mt-4 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
                 <DetailCell label="Marca" value={data.lead.brandName} />
                 <DetailCell label="Segmento" value={data.lead.segment} />
                 <DetailCell label="Localização" value={[data.lead.city, data.lead.state].filter(Boolean).join(" / ") || "Não informado"} />
@@ -1307,15 +1302,15 @@ function LeadDrawer({
             <section>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="font-display m-0 text-lg font-bold text-[#173f35]">
+                  <h3 className="font-display m-0 text-lg font-bold text-ink">
                     Propostas
                   </h3>
-                  <p className="m-0 mt-1 text-sm text-[#707b81]">
+                  <p className="m-0 mt-1 text-sm text-muted">
                     Valores e condições comerciais deste atendimento.
                   </p>
                 </div>
                 <button
-                  className="focus-ring flex shrink-0 items-center gap-1.5 rounded-xl bg-[#173f35] px-3.5 py-2.5 text-xs font-bold text-white hover:bg-[#2f6b52]"
+                  className="focus-ring flex shrink-0 items-center gap-1.5 rounded-xl bg-ink px-3.5 py-2.5 text-xs font-bold text-white hover:bg-accent-dark hover:text-white"
                   onClick={() => setProposalEditor({})}
                 >
                   <Plus className="size-3.5" /> Nova proposta
@@ -1323,12 +1318,12 @@ function LeadDrawer({
               </div>
 
               {proposalList.length === 0 ? (
-                <div className="mt-4 rounded-2xl border border-dashed border-[#b8c0bd] bg-[#eeebe3]/50 p-5 text-center">
-                  <FileText className="mx-auto size-5 text-[#26745f]" />
-                  <p className="m-0 mt-2 text-sm font-semibold text-[#46545e]">
+                <div className="mt-4 rounded-xl border border-dashed border-line-strong bg-surface-soft/50 p-5 text-center">
+                  <FileText className="mx-auto size-5 text-accent-dark" />
+                  <p className="m-0 mt-2 text-sm font-semibold text-ink-soft">
                     Nenhuma proposta criada
                   </p>
-                  <p className="m-0 mt-1 text-xs text-[#707b81]">
+                  <p className="m-0 mt-1 text-xs text-muted">
                     Crie um rascunho para definir escopo, valor e validade.
                   </p>
                 </div>
@@ -1340,13 +1335,13 @@ function LeadDrawer({
                       proposal.status === "DRAFT" || proposal.status === "SENT";
                     return (
                       <article
-                        className="rounded-2xl border border-[#d9d8d0] bg-white p-4"
+                        className="rounded-xl border border-line bg-white p-4"
                         key={proposal.id}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <div className="flex items-center gap-2">
-                              <strong className="text-sm text-[#173f35]">
+                              <strong className="text-sm text-ink">
                                 {formatProposalNumber(proposal.number)}
                               </strong>
                               <span
@@ -1355,20 +1350,20 @@ function LeadDrawer({
                                 {statusMeta.label}
                               </span>
                             </div>
-                            <p className="m-0 mt-1 text-xs text-[#707b81]">
+                            <p className="m-0 mt-1 text-xs text-muted">
                               Válida até {formatDateOnly(proposal.validUntil)} ·{" "}
                               {proposal.items.length} item(ns)
                             </p>
                           </div>
-                          <strong className="font-display text-lg text-[#173f35]">
+                          <strong className="font-display text-lg text-ink">
                             {formatMoney(proposal.totalCents)}
                           </strong>
                         </div>
 
-                        <div className="mt-4 flex flex-wrap gap-2 border-t border-[#d9d8d0] pt-3">
+                        <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-3">
                           {proposal.status === "DRAFT" && (
                             <button
-                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg border border-[#d9d8d0] px-3 text-xs font-bold text-[#46545e] hover:bg-[#eeebe3]"
+                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-xs font-bold text-ink-soft hover:bg-surface-soft"
                               onClick={() =>
                                 setProposalEditor({ proposal })
                               }
@@ -1378,7 +1373,7 @@ function LeadDrawer({
                           )}
                           {proposal.status === "SENT" && (
                             <button
-                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg border border-[#d9d8d0] px-3 text-xs font-bold text-[#46545e] hover:bg-[#eeebe3]"
+                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-xs font-bold text-ink-soft hover:bg-surface-soft"
                               disabled={sendingProposalId === proposal.id}
                               onClick={() => void openPublicProposal(proposal)}
                             >
@@ -1388,7 +1383,7 @@ function LeadDrawer({
                           )}
                           {canSend && (
                             <button
-                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg bg-[#2fbf73] px-3 text-xs font-bold text-[#173f35] hover:bg-[#27aa65] disabled:cursor-wait disabled:opacity-60"
+                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-bold hover:bg-accent-dark text-white disabled:cursor-wait disabled:opacity-60"
                               disabled={sendingProposalId === proposal.id}
                               onClick={() => void sendProposal(proposal)}
                             >
@@ -1413,22 +1408,22 @@ function LeadDrawer({
             <section>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="font-display m-0 text-lg font-bold text-[#173f35]">
+                  <h3 className="font-display m-0 text-lg font-bold text-ink">
                     Contratos
                   </h3>
-                  <p className="m-0 mt-1 text-sm text-[#707b81]">
+                  <p className="m-0 mt-1 text-sm text-muted">
                     O contrato é gerado automaticamente quando a proposta é aceita.
                   </p>
                 </div>
               </div>
 
               {contractList.length === 0 ? (
-                <div className="mt-4 rounded-2xl border border-dashed border-[#b8c0bd] bg-[#eeebe3]/50 p-5 text-center">
-                  <FileText className="mx-auto size-5 text-[#26745f]" />
-                  <p className="m-0 mt-2 text-sm font-semibold text-[#46545e]">
+                <div className="mt-4 rounded-xl border border-dashed border-line-strong bg-surface-soft/50 p-5 text-center">
+                  <FileText className="mx-auto size-5 text-accent-dark" />
+                  <p className="m-0 mt-2 text-sm font-semibold text-ink-soft">
                     Nenhum contrato gerado
                   </p>
-                  <p className="m-0 mt-1 text-xs text-[#707b81]">
+                  <p className="m-0 mt-1 text-xs text-muted">
                     Depois do aceite comercial, o contrato aparecerá aqui para envio.
                   </p>
                 </div>
@@ -1457,13 +1452,13 @@ function LeadDrawer({
                     );
                     return (
                       <article
-                        className="rounded-2xl border border-[#d9d8d0] bg-white p-4"
+                        className="rounded-xl border border-line bg-white p-4"
                         key={contract.id}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <div className="flex items-center gap-2">
-                              <strong className="text-sm text-[#173f35]">
+                              <strong className="text-sm text-ink">
                                 {formatContractNumber(contract.number)}
                               </strong>
                               <span
@@ -1472,26 +1467,26 @@ function LeadDrawer({
                                 {statusMeta.label}
                               </span>
                             </div>
-                            <p className="m-0 mt-1 text-xs text-[#707b81]">
+                            <p className="m-0 mt-1 text-xs text-muted">
                               Válido até {formatDateOnly(contract.validUntil)}
                             </p>
                           </div>
-                          <strong className="font-display text-lg text-[#173f35]">
+                          <strong className="font-display text-lg text-ink">
                             {formatMoney(contract.totalCents)}
                           </strong>
                         </div>
 
-                        <div className="mt-4 flex flex-wrap gap-2 border-t border-[#d9d8d0] pt-3">
+                        <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-3">
                           {canEdit && (
                             <button
-                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg border border-[#d9d8d0] px-3 text-xs font-bold text-[#46545e] hover:bg-[#eeebe3]"
+                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-xs font-bold text-ink-soft hover:bg-surface-soft"
                               onClick={() => setContractEditor(contract)}
                             >
                               <Pencil className="size-3.5" /> Editar contrato
                             </button>
                           )}
                           <button
-                            className="focus-ring flex h-9 items-center gap-1.5 rounded-lg border border-[#d9d8d0] px-3 text-xs font-bold text-[#46545e] hover:bg-[#eeebe3] disabled:cursor-wait disabled:opacity-60"
+                            className="focus-ring flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-xs font-bold text-ink-soft hover:bg-surface-soft disabled:cursor-wait disabled:opacity-60"
                             disabled={generatingPdfId === contract.id}
                             onClick={() => void downloadContract(contract)}
                           >
@@ -1504,7 +1499,7 @@ function LeadDrawer({
                           </button>
                           {canOpen && (
                             <button
-                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg border border-[#d9d8d0] px-3 text-xs font-bold text-[#46545e] hover:bg-[#eeebe3]"
+                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-xs font-bold text-ink-soft hover:bg-surface-soft"
                               disabled={sendingContractId === contract.id}
                               onClick={() => void openPublicContract(contract)}
                             >
@@ -1514,7 +1509,7 @@ function LeadDrawer({
                           )}
                           {canSend && (
                             <button
-                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg bg-[#2fbf73] px-3 text-xs font-bold text-[#173f35] hover:bg-[#27aa65] disabled:cursor-wait disabled:opacity-60"
+                              className="focus-ring flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-bold hover:bg-accent-dark text-white disabled:cursor-wait disabled:opacity-60"
                               disabled={sendingContractId === contract.id}
                               onClick={() => void sendContract(contract)}
                             >
@@ -1550,28 +1545,28 @@ function LeadDrawer({
             <section>
               <div className="flex items-end justify-between gap-4">
                 <div>
-                  <h3 className="font-display m-0 text-lg font-bold text-[#173f35]">Consulta ao INPI</h3>
-                  <p className="m-0 mt-1 text-sm text-[#707b81]">
+                  <h3 className="font-display m-0 text-lg font-bold text-ink">Consulta ao INPI</h3>
+                  <p className="m-0 mt-1 text-sm text-muted">
                     {data.lead.searchStatus === "FAILED" ? "Pesquisa não concluída — dados do contato recebidos" : `${data.lead.totalResults} resultado(s) localizado(s)`}
                   </p>
                 </div>
-                <span className="text-xs text-[#707b81]">{formatDate(data.lead.searchedAt)}</span>
+                <span className="text-xs text-muted">{formatDate(data.lead.searchedAt)}</span>
               </div>
               <div className="mt-4 space-y-2">
                 {data.lead.searchStatus === "FAILED" ? (
-                  <p className="text-sm text-[#707b81]">A consulta não foi concluída. Não há resultado disponível para análise.</p>
+                  <p className="text-sm text-muted">A consulta não foi concluída. Não há resultado disponível para análise.</p>
                 ) : data.hits.length === 0 ? (
-                  <p className="rounded-xl bg-[#e3f0e8] px-4 py-4 text-sm text-[#26745f]">
+                  <p className="rounded-xl bg-accent-soft px-4 py-4 text-sm text-accent-dark">
                     Nenhuma ocorrência exata foi retornada nesta consulta.
                   </p>
                 ) : (
                   data.hits.slice(0, 5).map((hit) => (
-                    <div className="rounded-xl border border-[#d9d8d0] bg-white p-4" key={hit.id}>
+                    <div className="rounded-xl border border-line bg-white p-4" key={hit.id}>
                       <div className="flex items-start justify-between gap-3">
-                        <strong className="text-sm text-[#173f35]">{hit.brandName || "Marca sem nome"}</strong>
-                        <span className="shrink-0 text-xs text-[#707b81]">{hit.processNumber || "Sem número"}</span>
+                        <strong className="text-sm text-ink">{hit.brandName || "Marca sem nome"}</strong>
+                        <span className="shrink-0 text-xs text-muted">{hit.processNumber || "Sem número"}</span>
                       </div>
-                      <p className="m-0 mt-2 text-xs leading-5 text-[#707b81]">
+                      <p className="m-0 mt-2 text-xs leading-5 text-muted">
                         {[hit.holderName, hit.niceClass, hit.situation].filter(Boolean).join(" · ")}
                       </p>
                     </div>
@@ -1581,16 +1576,16 @@ function LeadDrawer({
             </section>
 
             <section>
-              <h3 className="font-display m-0 text-lg font-bold text-[#173f35]">Histórico</h3>
+              <h3 className="font-display m-0 text-lg font-bold text-ink">Histórico</h3>
               <div className="mt-4 space-y-0">
                 {data.events.map((event, index) => (
                   <div className="grid grid-cols-[18px_1fr] gap-3" key={event.id}>
                     <div className="flex flex-col items-center">
-                      <span className="mt-1.5 size-2.5 rounded-full bg-[#79b896]" />
-                      {index < data.events.length - 1 && <span className="w-px flex-1 bg-[#d9d8d0]" />}
+                      <span className="mt-1.5 size-2.5 rounded-full bg-accent" />
+                      {index < data.events.length - 1 && <span className="w-px flex-1 bg-line" />}
                     </div>
                     <div className="pb-5">
-                      <p className="m-0 text-sm font-semibold text-[#46545e]">
+                      <p className="m-0 text-sm font-semibold text-ink-soft">
                         {event.type === "LEAD_CAPTURED"
                           ? "Lead capturado pela landing page"
                           : event.type === "REGISTRATION_REQUESTED"
@@ -1617,7 +1612,7 @@ function LeadDrawer({
                             ? "Etapa comercial atualizada"
                             : event.type}
                       </p>
-                      <p className="m-0 mt-1 text-xs text-[#707b81]">{formatDate(event.createdAt)}</p>
+                      <p className="m-0 mt-1 text-xs text-muted">{formatDate(event.createdAt)}</p>
                     </div>
                   </div>
                 ))}
@@ -1685,7 +1680,7 @@ function PublicProposal({ token }: { token: string }) {
     try {
       const result = await trpc.publicProposal.get.query({ token });
       setProposal(result);
-      document.title = `${formatProposalNumber(result.number)} | 55 Marcas`;
+      document.title = `${formatProposalNumber(result.number)} | 55 marcas.`;
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -1730,8 +1725,8 @@ function PublicProposal({ token }: { token: string }) {
 
   if (loading) {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#f6f2ea]">
-        <div className="flex items-center gap-3 text-[#26745f]">
+      <main className="grid min-h-screen place-items-center bg-surface-soft">
+        <div className="flex items-center gap-3 text-accent-dark">
           <LoaderCircle className="size-5 animate-spin" />
           <span className="text-sm font-semibold">Carregando proposta...</span>
         </div>
@@ -1741,13 +1736,13 @@ function PublicProposal({ token }: { token: string }) {
 
   if (!proposal) {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#f6f2ea] px-5">
-        <section className="max-w-md rounded-2xl border border-[#d9d8d0] bg-[#fffdfa] p-8 text-center">
-          <XCircle className="mx-auto size-10 text-[#b64b3f]" />
-          <h1 className="font-display mt-5 text-2xl font-bold text-[#173f35]">
+      <main className="grid min-h-screen place-items-center bg-surface-soft px-5">
+        <section className="max-w-md rounded-xl border border-line bg-surface p-8 text-center">
+          <XCircle className="mx-auto size-10 text-danger" />
+          <h1 className="font-display mt-5 text-2xl font-bold text-ink">
             Proposta indisponível
           </h1>
-          <p className="mt-3 text-sm leading-6 text-[#707b81]">
+          <p className="mt-3 text-sm leading-6 text-muted">
             {error || "Confira o endereço recebido ou solicite um novo link."}
           </p>
         </section>
@@ -1759,12 +1754,12 @@ function PublicProposal({ token }: { token: string }) {
   const responseAccepted = proposal.response?.decision === "ACCEPTED";
 
   return (
-    <main className="proposal-page min-h-screen bg-[#f6f2ea] text-[#173f35]">
-      <header className="print-hidden border-b border-[#d9d8d0] bg-[#fffdfa]">
+    <main className="proposal-page min-h-screen bg-surface-soft text-ink">
+      <header className="print-hidden border-b border-line bg-surface">
         <div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5 sm:px-8">
           <Logo />
           <button
-            className="focus-ring flex h-10 items-center gap-2 rounded-xl border border-[#b8c0bd] px-3 text-xs font-bold text-[#46545e] hover:bg-[#eeebe3]"
+            className="focus-ring flex h-10 items-center gap-2 rounded-xl border border-line-strong px-3 text-xs font-bold text-ink-soft hover:bg-surface-soft"
             onClick={() => window.print()}
           >
             <FileText className="size-4" /> Imprimir / salvar PDF
@@ -1773,17 +1768,17 @@ function PublicProposal({ token }: { token: string }) {
       </header>
 
       <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
-        <article className="overflow-hidden rounded-[1.5rem] border border-[#d9d8d0] bg-[#fffdfa] shadow-xl shadow-[#173f35]/5">
-          <section className="bg-[#173f35] px-6 py-8 text-[#fffdfa] sm:px-10 sm:py-11">
+        <article className="overflow-hidden rounded-2xl border border-line bg-surface shadow-xl shadow-ink/5">
+          <section className="bg-ink px-6 py-8 text-surface sm:px-10 sm:py-11">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div>
-                <p className="m-0 text-xs font-bold uppercase tracking-[0.16em] text-[#79b896]">
+                <p className="m-0 text-xs font-bold uppercase tracking-[0.16em] text-accent">
                   Proposta comercial {formatProposalNumber(proposal.number)}
                 </p>
                 <h1 className="font-display m-0 mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.04em] sm:text-4xl">
                   Registro da marca {proposal.brandName}
                 </h1>
-                <p className="m-0 mt-4 text-sm text-[#d9d6d0]">
+                <p className="m-0 mt-4 text-sm text-ink-on-dark">
                   Preparada para {proposal.contactName}
                 </p>
               </div>
@@ -1797,52 +1792,52 @@ function PublicProposal({ token }: { token: string }) {
 
           <div className="space-y-9 px-6 py-8 sm:px-10 sm:py-10">
             <section className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl bg-[#e3f0e8] p-4">
-                <CalendarDays className="size-4 text-[#26745f]" />
-                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#707b81]">
+              <div className="rounded-xl bg-accent-soft p-4">
+                <CalendarDays className="size-4 text-accent-dark" />
+                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted">
                   Validade
                 </p>
                 <p className="m-0 mt-1 text-sm font-bold">
                   {formatDateOnly(proposal.validUntil)}
                 </p>
               </div>
-              <div className="rounded-xl bg-[#eeebe3] p-4">
-                <FileSearch className="size-4 text-[#26745f]" />
-                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#707b81]">
+              <div className="rounded-xl bg-surface-soft p-4">
+                <FileSearch className="size-4 text-accent-dark" />
+                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted">
                   Segmento
                 </p>
                 <p className="m-0 mt-1 text-sm font-bold">{proposal.segment}</p>
               </div>
-              <div className="rounded-xl bg-[#ddf4e6] p-4">
-                <ShieldCheck className="size-4 text-[#26745f]" />
-                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#707b81]">
+              <div className="rounded-xl bg-accent-soft p-4">
+                <ShieldCheck className="size-4 text-accent-dark" />
+                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted">
                   Responsável
                 </p>
-                <p className="m-0 mt-1 text-sm font-bold">55 Marcas</p>
+                <p className="m-0 mt-1 text-sm font-bold">55 marcas.</p>
               </div>
             </section>
 
             <section>
               <h2 className="font-display m-0 text-xl font-bold">Escopo e investimento</h2>
-              <div className="mt-4 overflow-hidden rounded-2xl border border-[#d9d8d0]">
-                <div className="hidden grid-cols-[1fr_80px_140px_140px] bg-[#eeebe3] px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-[#707b81] sm:grid">
+              <div className="mt-4 overflow-hidden rounded-xl border border-line">
+                <div className="hidden grid-cols-[1fr_80px_140px_140px] bg-surface-soft px-4 py-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted sm:grid">
                   <span>Item</span>
                   <span className="text-center">Qtd.</span>
                   <span className="text-right">Unitário</span>
                   <span className="text-right">Total</span>
                 </div>
-                <div className="divide-y divide-[#d9d8d0]">
+                <div className="divide-y divide-line">
                   {proposal.items.map((item) => (
                     <div
                       className="grid gap-2 px-4 py-4 text-sm sm:grid-cols-[1fr_80px_140px_140px] sm:items-center"
                       key={item.id}
                     >
                       <strong className="font-semibold">{item.description}</strong>
-                      <span className="text-[#707b81] sm:text-center">
+                      <span className="text-muted sm:text-center">
                         <span className="sm:hidden">Quantidade: </span>
                         {item.quantity}
                       </span>
-                      <span className="text-[#707b81] sm:text-right">
+                      <span className="text-muted sm:text-right">
                         {formatMoney(item.unitPriceCents)}
                       </span>
                       <strong className="sm:text-right">
@@ -1854,17 +1849,17 @@ function PublicProposal({ token }: { token: string }) {
               </div>
 
               <div className="ml-auto mt-5 max-w-sm space-y-2">
-                <div className="flex justify-between text-sm text-[#707b81]">
+                <div className="flex justify-between text-sm text-muted">
                   <span>Subtotal</span>
                   <span>{formatMoney(proposal.subtotalCents)}</span>
                 </div>
                 {proposal.discountCents > 0 && (
-                  <div className="flex justify-between text-sm text-[#707b81]">
+                  <div className="flex justify-between text-sm text-muted">
                     <span>Desconto</span>
                     <span>- {formatMoney(proposal.discountCents)}</span>
                   </div>
                 )}
-                <div className="flex items-end justify-between border-t border-[#d9d8d0] pt-3">
+                <div className="flex items-end justify-between border-t border-line pt-3">
                   <strong>Total</strong>
                   <strong className="font-display text-2xl">
                     {formatMoney(proposal.totalCents)}
@@ -1874,30 +1869,30 @@ function PublicProposal({ token }: { token: string }) {
             </section>
 
             {proposal.notes && (
-              <section className="rounded-2xl border border-[#d9d8d0] bg-[#eeebe3]/55 p-5">
+              <section className="rounded-xl border border-line bg-surface-soft/55 p-5">
                 <h2 className="m-0 text-sm font-bold">Condições e observações</h2>
-                <p className="m-0 mt-2 whitespace-pre-wrap text-sm leading-6 text-[#46545e]">
+                <p className="m-0 mt-2 whitespace-pre-wrap text-sm leading-6 text-ink-soft">
                   {proposal.notes}
                 </p>
               </section>
             )}
 
-            <section className="print-hidden border-t border-[#d9d8d0] pt-8">
+            <section className="print-hidden border-t border-line pt-8">
               {proposal.response ? (
                 <div
-                  className={`rounded-2xl p-6 text-center ${
-                    responseAccepted ? "bg-[#dceee7]" : "bg-[#fbe4df]"
+                  className={`rounded-xl p-6 text-center ${
+                    responseAccepted ? "bg-positive-soft" : "bg-danger-soft"
                   }`}
                 >
                   {responseAccepted ? (
-                    <CheckCircle2 className="mx-auto size-9 text-[#26745f]" />
+                    <CheckCircle2 className="mx-auto size-9 text-positive" />
                   ) : (
-                    <XCircle className="mx-auto size-9 text-[#b64b3f]" />
+                    <XCircle className="mx-auto size-9 text-danger" />
                   )}
                   <h2 className="font-display m-0 mt-4 text-2xl font-bold">
                     Proposta {responseAccepted ? "aceita" : "recusada"}
                   </h2>
-                  <p className="m-0 mt-2 text-sm text-[#46545e]">
+                  <p className="m-0 mt-2 text-sm text-ink-soft">
                     Resposta registrada por {proposal.response.signerName} em{" "}
                     {formatDate(proposal.response.createdAt)}.
                   </p>
@@ -1905,12 +1900,12 @@ function PublicProposal({ token }: { token: string }) {
               ) : proposal.canRespond ? (
                 decision ? (
                   <form
-                    className="rounded-2xl border border-[#d9d8d0] bg-[#eeebe3]/40 p-5 sm:p-6"
+                    className="rounded-xl border border-line bg-surface-soft/40 p-5 sm:p-6"
                     onSubmit={submitResponse}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-[#26745f]">
+                        <p className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-accent-dark">
                           Confirmação
                         </p>
                         <h2 className="font-display m-0 mt-1 text-xl font-bold">
@@ -1920,7 +1915,7 @@ function PublicProposal({ token }: { token: string }) {
                         </h2>
                       </div>
                       <button
-                        className="grid size-9 place-items-center rounded-lg hover:bg-[#d9d8d0]"
+                        className="grid size-9 place-items-center rounded-lg hover:bg-line"
                         type="button"
                         onClick={() => setDecision(undefined)}
                         aria-label="Cancelar resposta"
@@ -1933,7 +1928,7 @@ function PublicProposal({ token }: { token: string }) {
                         Seu nome completo
                       </span>
                       <input
-                        className="focus-ring h-11 w-full rounded-xl border border-[#d9d8d0] bg-white px-3 text-sm outline-none"
+                        className="focus-ring h-11 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none"
                         required
                         minLength={3}
                         maxLength={160}
@@ -1941,9 +1936,9 @@ function PublicProposal({ token }: { token: string }) {
                         onChange={(event) => setSignerName(event.target.value)}
                       />
                     </label>
-                    <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm leading-6 text-[#46545e]">
+                    <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm leading-6 text-ink-soft">
                       <input
-                        className="mt-1 size-4 accent-[#167548]"
+                        className="mt-1 size-4 accent-positive"
                         type="checkbox"
                         required
                         checked={confirmed}
@@ -1955,14 +1950,14 @@ function PublicProposal({ token }: { token: string }) {
                           : "Declaro que li a proposta e confirmo que não desejo prosseguir nestas condições."}
                       </span>
                     </label>
-                    <p className="mt-4 text-xs leading-5 text-[#707b81]">
+                    <p className="mt-4 text-xs leading-5 text-muted">
                       Esta confirmação registra a decisão comercial e não substitui o contrato de prestação de serviços.
                     </p>
                     <button
-                      className={`focus-ring mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold disabled:cursor-wait disabled:opacity-60 ${
+                      className={`focus-ring text-white mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold disabled:cursor-wait disabled:opacity-60 ${
                         decision === "ACCEPTED"
-                          ? "bg-[#2fbf73] text-[#173f35] hover:bg-[#27aa65]"
-                          : "bg-[#b64b3f] text-white hover:bg-[#9d4037]"
+                          ? "bg-accent text-ink hover:bg-accent-dark hover:text-white"
+                          : "bg-danger text-white hover:bg-danger"
                       }`}
                       disabled={submitting || !confirmed}
                     >
@@ -1971,17 +1966,17 @@ function PublicProposal({ token }: { token: string }) {
                     </button>
                   </form>
                 ) : (
-                  <div className="rounded-2xl bg-[#173f35] p-6 text-center text-white sm:p-8">
-                    <ShieldCheck className="mx-auto size-7 text-[#79b896]" />
+                  <div className="rounded-xl bg-ink p-6 text-center text-white sm:p-8">
+                    <ShieldCheck className="mx-auto size-7 text-accent" />
                     <h2 className="font-display m-0 mt-4 text-2xl font-bold">
                       Pronto para proteger sua marca?
                     </h2>
-                    <p className="mx-auto mb-0 mt-3 max-w-lg text-sm leading-6 text-[#d9d6d0]">
+                    <p className="mx-auto mb-0 mt-3 max-w-lg text-sm leading-6 text-ink-on-dark">
                       Registre sua decisão abaixo. Você ainda receberá o contrato antes do início do serviço.
                     </p>
                     <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
                       <button
-                        className="focus-ring flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2fbf73] px-5 text-sm font-bold text-[#173f35] hover:bg-[#27aa65]"
+                        className="focus-ring flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-bold hover:bg-accent-dark text-white"
                         onClick={() => setDecision("ACCEPTED")}
                       >
                         <CheckCircle2 className="size-4" /> Aceitar proposta
@@ -1996,18 +1991,18 @@ function PublicProposal({ token }: { token: string }) {
                   </div>
                 )
               ) : (
-                <div className="rounded-2xl bg-[#eeebe3] p-6 text-center">
+                <div className="rounded-xl bg-surface-soft p-6 text-center">
                   <h2 className="font-display m-0 text-xl font-bold">
                     Esta proposta não aceita mais respostas
                   </h2>
-                  <p className="m-0 mt-2 text-sm text-[#707b81]">
-                    Solicite uma condição atualizada à equipe da 55 Marcas.
+                  <p className="m-0 mt-2 text-sm text-muted">
+                    Solicite uma condição atualizada à equipe da 55 marcas..
                   </p>
                 </div>
               )}
 
               {error && (
-                <p className="mt-4 rounded-xl bg-[#fbe4df] px-4 py-3 text-sm text-[#b64b3f]">
+                <p className="mt-4 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
                   {error}
                 </p>
               )}
@@ -2015,8 +2010,8 @@ function PublicProposal({ token }: { token: string }) {
           </div>
         </article>
 
-        <footer className="py-8 text-center text-xs leading-5 text-[#707b81]">
-          55 Marcas · Você cria. A gente protege.
+        <footer className="py-8 text-center text-xs leading-5 text-muted">
+          55 marcas. · Você cria. A gente protege.
         </footer>
       </div>
     </main>
@@ -2035,7 +2030,7 @@ function PublicContract({ token }: { token: string }) {
     try {
       const result = await trpc.publicContract.get.query({ token });
       setContract(result);
-      document.title = `${formatContractNumber(result.number)} | 55 Marcas`;
+      document.title = `${formatContractNumber(result.number)} | 55 marcas.`;
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -2084,8 +2079,8 @@ function PublicContract({ token }: { token: string }) {
 
   if (loading) {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#f6f2ea]">
-        <div className="flex items-center gap-3 text-[#26745f]">
+      <main className="grid min-h-screen place-items-center bg-surface-soft">
+        <div className="flex items-center gap-3 text-accent-dark">
           <LoaderCircle className="size-5 animate-spin" />
           <span className="text-sm font-semibold">Carregando contrato...</span>
         </div>
@@ -2095,13 +2090,13 @@ function PublicContract({ token }: { token: string }) {
 
   if (!contract) {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#f6f2ea] px-5">
-        <section className="max-w-md rounded-2xl border border-[#d9d8d0] bg-[#fffdfa] p-8 text-center">
-          <XCircle className="mx-auto size-10 text-[#b64b3f]" />
-          <h1 className="font-display mt-5 text-2xl font-bold text-[#173f35]">
+      <main className="grid min-h-screen place-items-center bg-surface-soft px-5">
+        <section className="max-w-md rounded-xl border border-line bg-surface p-8 text-center">
+          <XCircle className="mx-auto size-10 text-danger" />
+          <h1 className="font-display mt-5 text-2xl font-bold text-ink">
             Contrato indisponível
           </h1>
-          <p className="mt-3 text-sm leading-6 text-[#707b81]">
+          <p className="mt-3 text-sm leading-6 text-muted">
             {error || "Confira o endereço recebido ou solicite um novo link."}
           </p>
         </section>
@@ -2111,13 +2106,13 @@ function PublicContract({ token }: { token: string }) {
 
   const statusMeta = CONTRACT_STATUS_META[contract.status];
   return (
-    <main className="proposal-page min-h-screen bg-[#f6f2ea] text-[#173f35]">
-      <header className="print-hidden border-b border-[#d9d8d0] bg-[#fffdfa]">
+    <main className="proposal-page min-h-screen bg-surface-soft text-ink">
+      <header className="print-hidden border-b border-line bg-surface">
         <div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-5 sm:px-8">
           <Logo />
           <div className="flex items-center gap-2">
             <button
-              className="focus-ring flex h-10 items-center gap-2 rounded-xl bg-[#173f35] px-3 text-xs font-bold text-white hover:bg-[#2f6b52] disabled:cursor-wait disabled:opacity-60"
+              className="focus-ring flex h-10 items-center gap-2 rounded-xl bg-ink px-3 text-xs font-bold text-white hover:bg-accent-dark hover:text-white disabled:cursor-wait disabled:opacity-60"
               disabled={generatingPdf}
               title="Baixar PDF tradicional"
               onClick={() => void downloadPdf()}
@@ -2130,7 +2125,7 @@ function PublicContract({ token }: { token: string }) {
               Baixar PDF
             </button>
             <button
-              className="focus-ring hidden h-10 items-center gap-2 rounded-xl border border-[#b8c0bd] px-3 text-xs font-bold text-[#46545e] hover:bg-[#eeebe3] sm:flex"
+              className="focus-ring hidden h-10 items-center gap-2 rounded-xl border border-line-strong px-3 text-xs font-bold text-ink-soft hover:bg-surface-soft sm:flex"
               onClick={() => window.print()}
             >
               <FileText className="size-4" /> Imprimir página
@@ -2140,17 +2135,17 @@ function PublicContract({ token }: { token: string }) {
       </header>
 
       <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
-        <article className="overflow-hidden rounded-[1.5rem] border border-[#d9d8d0] bg-[#fffdfa] shadow-xl shadow-[#173f35]/5">
-          <section className="bg-[#173f35] px-6 py-8 text-[#fffdfa] sm:px-10 sm:py-11">
+        <article className="overflow-hidden rounded-2xl border border-line bg-surface shadow-xl shadow-ink/5">
+          <section className="bg-ink px-6 py-8 text-surface sm:px-10 sm:py-11">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div>
-                <p className="m-0 text-xs font-bold uppercase tracking-[0.16em] text-[#79b896]">
+                <p className="m-0 text-xs font-bold uppercase tracking-[0.16em] text-accent">
                   {formatContractNumber(contract.number)}
                 </p>
                 <h1 className="font-display m-0 mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.04em] sm:text-4xl">
                   {contract.title}
                 </h1>
-                <p className="m-0 mt-4 text-sm text-[#d9d6d0]">
+                <p className="m-0 mt-4 text-sm text-ink-on-dark">
                   Preparado para {contract.contactName}
                 </p>
               </div>
@@ -2164,23 +2159,23 @@ function PublicContract({ token }: { token: string }) {
 
           <div className="space-y-9 px-6 py-8 sm:px-10 sm:py-10">
             <section className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl bg-[#e3f0e8] p-4">
-                <UserRound className="size-4 text-[#26745f]" />
-                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#707b81]">
+              <div className="rounded-xl bg-accent-soft p-4">
+                <UserRound className="size-4 text-accent-dark" />
+                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted">
                   Contratante
                 </p>
                 <p className="m-0 mt-1 text-sm font-bold">{contract.contactName}</p>
               </div>
-              <div className="rounded-xl bg-[#eeebe3] p-4">
-                <FileSearch className="size-4 text-[#26745f]" />
-                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#707b81]">
+              <div className="rounded-xl bg-surface-soft p-4">
+                <FileSearch className="size-4 text-accent-dark" />
+                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted">
                   Marca
                 </p>
                 <p className="m-0 mt-1 text-sm font-bold">{contract.brandName}</p>
               </div>
-              <div className="rounded-xl bg-[#ddf4e6] p-4">
-                <CircleDollarSign className="size-4 text-[#26745f]" />
-                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#707b81]">
+              <div className="rounded-xl bg-accent-soft p-4">
+                <CircleDollarSign className="size-4 text-accent-dark" />
+                <p className="m-0 mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted">
                   Valor total
                 </p>
                 <p className="m-0 mt-1 text-sm font-bold">{formatMoney(contract.totalCents)}</p>
@@ -2193,24 +2188,24 @@ function PublicContract({ token }: { token: string }) {
                   <h2 className="font-display m-0 text-xl font-bold">
                     Instrumento contratual
                   </h2>
-                   <p className="m-0 mt-1 text-sm text-[#707b81]">
+                   <p className="m-0 mt-1 text-sm text-muted">
                      Leia o conteúdo integral e baixe o PDF para assinatura externa.
                    </p>
                 </div>
-                <span className="text-xs text-[#707b81]">
+                <span className="text-xs text-muted">
                   Validade comercial até {formatDateOnly(contract.validUntil)}
                 </span>
               </div>
-              <div className="mt-4 rounded-2xl border border-[#d9d8d0] bg-white p-5 text-sm leading-7 text-[#46545e] sm:p-7">
+              <div className="mt-4 rounded-xl border border-line bg-white p-5 text-sm leading-7 text-ink-soft sm:p-7">
                 <p className="m-0 whitespace-pre-wrap">{contract.content}</p>
               </div>
             </section>
 
-            <section className="print-hidden rounded-2xl border border-[#b8c0bd] bg-[#e3f0e8]/55 p-5">
-              <h2 className="m-0 text-sm font-bold text-[#173f35]">
+            <section className="print-hidden rounded-xl border border-line-strong bg-accent-soft/55 p-5">
+              <h2 className="m-0 text-sm font-bold text-ink">
                 Precisa assinar fora desta página?
               </h2>
-              <p className="m-0 mt-2 text-sm leading-6 text-[#46545e]">
+              <p className="m-0 mt-2 text-sm leading-6 text-ink-soft">
                 Use “Baixar PDF tradicional” para obter um arquivo formal e
                 enviá-lo ao GOV.br. Se preferir, use “Imprimir página” para
                 imprimir, assinar manualmente e digitalizar. Esta página não
@@ -2218,20 +2213,20 @@ function PublicContract({ token }: { token: string }) {
               </p>
             </section>
 
-            <section className="print-hidden border-t border-[#d9d8d0] pt-8">
-              <div className="rounded-2xl border border-[#d9d8d0] bg-[#eeebe3]/40 p-5 text-center sm:p-6">
+            <section className="print-hidden border-t border-line pt-8">
+              <div className="rounded-xl border border-line bg-surface-soft/40 p-5 text-center sm:p-6">
                 <h2 className="font-display m-0 text-xl font-bold">
                   Assinatura externa
                 </h2>
-                <p className="m-0 mt-2 text-sm leading-6 text-[#46545e]">
+                <p className="m-0 mt-2 text-sm leading-6 text-ink-soft">
                   Assine o PDF pelo GOV.br ou manualmente. Depois, encaminhe o
-                  arquivo assinado à equipe da 55 Marcas para conferência e
+                  arquivo assinado à equipe da 55 marcas. para conferência e
                   arquivamento.
                 </p>
               </div>
 
               {error && (
-                <p className="mt-4 rounded-xl bg-[#fbe4df] px-4 py-3 text-sm text-[#b64b3f]">
+                <p className="mt-4 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
                   {error}
                 </p>
               )}
@@ -2239,16 +2234,24 @@ function PublicContract({ token }: { token: string }) {
           </div>
         </article>
 
-        <footer className="py-8 text-center text-xs leading-5 text-[#707b81]">
-          55 Marcas · Você cria. A gente protege.
+        <footer className="py-8 text-center text-xs leading-5 text-muted">
+          55 marcas. · Você cria. A gente protege.
         </footer>
       </div>
     </main>
   );
 }
 
-function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () => void }) {
-  const [page, setPage] = useState(() => window.location.hash === "#/usuarios" ? "users" : "leads");
+type CrmPage = "leads" | "users" | "account";
+
+function pageFromHash(): CrmPage {
+  if (window.location.hash === "#/usuarios") return "users";
+  if (window.location.hash === "#/conta") return "account";
+  return "leads";
+}
+
+function Crm({ session, onSignedOut, onSessionUpdated }: { session: SessionData; onSignedOut: () => void; onSessionUpdated: (session: SessionData) => void }) {
+  const [page, setPage] = useState<CrmPage>(pageFromHash);
   const [data, setData] = useState<LeadListOutput>();
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
@@ -2261,7 +2264,7 @@ function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () =
 
   useEffect(() => {
     const navigate = () => {
-      setPage(window.location.hash === "#/usuarios" ? "users" : "leads");
+      setPage(pageFromHash());
       setMobileNav(false);
       setSelectedId(undefined);
     };
@@ -2305,38 +2308,41 @@ function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () =
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f2ea] lg:grid lg:grid-cols-[240px_1fr]">
-      <aside className={`fixed inset-y-0 left-0 z-40 w-60 border-r border-white/10 bg-[#173f35] p-5 text-white transition-transform lg:translate-x-0 ${
+    <div className="min-h-screen bg-surface-soft lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
+      <aside className={`crm-sidebar fixed inset-y-0 left-0 z-40 w-60 border-r border-white/10 bg-ink p-5 flex flex-col text-white transition-transform lg:translate-x-0 ${
         mobileNav ? "translate-x-0" : "-translate-x-full"
       }`}>
         <div className="flex items-center justify-between">
-          <div className="[&_p]:text-white [&_p:last-child]:text-[#79b896]"><Logo /></div>
+          <Logo inverted operations />
           <button className="lg:hidden" onClick={() => setMobileNav(false)} aria-label="Fechar menu"><X /></button>
         </div>
-        <nav className="mt-12 space-y-2">
-          <a className={`focus-ring flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold ${page === "leads" ? "bg-white/10" : "text-[#d9d6d0] hover:bg-white/5"}`} href="#/leads" aria-current={page === "leads" ? "page" : undefined} onClick={() => setMobileNav(false)}>
-            <UsersRound className="size-4 text-[#79b896]" /> Leads
+        <nav className="mt-12 mb-10 space-y-2" aria-label="Navegação do CRM">
+          <a className={`focus-ring flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold ${page === "leads" ? "bg-white/10" : "text-ink-on-dark hover:bg-white/5"}`} href="#/leads" aria-current={page === "leads" ? "page" : undefined} onClick={() => setMobileNav(false)}>
+            <UsersRound className="size-4 text-accent" /> Leads
           </a>
-          {session.user.crmRole === "ADMIN" && <a className={`focus-ring flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold ${page === "users" ? "bg-white/10" : "text-[#d9d6d0] hover:bg-white/5"}`} href="#/usuarios" aria-current={page === "users" ? "page" : undefined} onClick={() => setMobileNav(false)}>
-            <UserRound className="size-4 text-[#79b896]" /> Usuários
+          {session.user.crmRole === "ADMIN" && <a className={`focus-ring flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold ${page === "users" ? "bg-white/10" : "text-ink-on-dark hover:bg-white/5"}`} href="#/usuarios" aria-current={page === "users" ? "page" : undefined} onClick={() => setMobileNav(false)}>
+            <UserRound className="size-4 text-accent" /> Usuários
           </a>}
-          <span className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#d9d6d0]/60">
+          <a className={`focus-ring flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold ${page === "account" ? "bg-white/10" : "text-ink-on-dark hover:bg-white/5"}`} href="#/conta" aria-current={page === "account" ? "page" : undefined} onClick={() => setMobileNav(false)}>
+            <Settings2 className="size-4 text-accent" aria-hidden="true" /> Minha conta
+          </a>
+          <span className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-3 text-sm text-ink-on-dark/60">
             <LayoutDashboard className="size-4" /> Dashboard <small className="ml-auto text-[9px] uppercase">Em breve</small>
           </span>
-          <span className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-3 text-sm text-[#d9d6d0]/60">
+          <span className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-3 text-sm text-ink-on-dark/60">
             <CircleDollarSign className="size-4" /> Financeiro <small className="ml-auto text-[9px] uppercase">Em breve</small>
           </span>
         </nav>
-        <div className="absolute bottom-5 left-5 right-5 border-t border-white/10 pt-5">
+        <div className="mt-auto border-t border-white/10 pt-5 pb-2">
           <div className="flex items-center gap-3">
-            <div className="grid size-9 place-items-center rounded-full bg-[#79b896] text-sm font-bold text-[#173f35]">
+            <div className="grid size-9 place-items-center rounded-full bg-accent text-sm font-bold text-ink">
               {session.user.name.slice(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
               <p className="m-0 truncate text-sm font-semibold">{session.user.name}</p>
-              <p className="m-0 truncate text-[11px] text-[#d9d6d0]/70">{session.user.email}</p>
+              <p className="m-0 truncate text-[11px] text-ink-on-dark/70">{session.user.email}</p>
             </div>
-            <button className="focus-ring text-[#d9d6d0] hover:text-white" onClick={() => void handleSignOut()} aria-label="Sair">
+            <button className="focus-ring text-ink-on-dark hover:text-white" onClick={() => void handleSignOut()} aria-label="Sair">
               <LogOut className="size-4" />
             </button>
           </div>
@@ -2346,23 +2352,23 @@ function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () =
       {mobileNav && <button className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={() => setMobileNav(false)} aria-label="Fechar menu" />}
 
       <main className="min-w-0 lg:col-start-2">
-        <header className="flex h-20 items-center justify-between border-b border-[#d9d8d0] bg-[#fffdfa] px-5 sm:px-8 lg:px-10">
+        <header className="flex h-20 items-center justify-between border-b border-line bg-surface px-5 sm:px-8 lg:px-10">
           <div className="flex items-center gap-3">
-            <button className="focus-ring grid size-10 place-items-center rounded-xl border border-[#d9d8d0] lg:hidden" onClick={() => setMobileNav(true)} aria-label="Abrir menu">
+            <button className="focus-ring grid size-10 place-items-center rounded-xl border border-line lg:hidden" onClick={() => setMobileNav(true)} aria-label="Abrir menu">
               <Menu className="size-5" />
             </button>
             <div>
-              <p className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-[#26745f]">{page === "users" ? "Administração" : "Comercial"}</p>
-              <h1 className="font-display m-0 text-xl font-bold tracking-[-0.03em] text-[#173f35] sm:text-2xl">{page === "users" ? "Usuários" : "Central de leads"}</h1>
+              <p className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-accent-dark">{page === "users" ? "Administração" : page === "account" ? "Conta" : "Comercial"}</p>
+              <h1 className="font-display m-0 text-xl font-bold tracking-[-0.03em] text-ink sm:text-2xl">{page === "users" ? "Usuários" : page === "account" ? "Minha conta" : "Central de leads"}</h1>
             </div>
           </div>
-          {page === "leads" && <div className="hidden items-center gap-2 rounded-full bg-[#e3f0e8] px-3 py-2 text-xs font-bold text-[#26745f] sm:flex">
-            <span className="size-2 rounded-full bg-[#2fbf73]" />
+          {page === "leads" && <div className="hidden items-center gap-2 rounded-full bg-accent-soft px-3 py-2 text-xs font-bold text-accent-dark sm:flex">
+            <span className="size-2 rounded-full bg-accent" />
             {todayCount} novo(s) hoje
           </div>}
         </header>
 
-        {page === "users" ? session.user.crmRole === "ADMIN" ? <UsersPage currentUserId={session.user.id} /> : <p role="alert" className="p-8 text-[#b64b3f]">Somente administradores podem gerenciar usuários. <a href="#/leads" className="underline">Voltar aos leads</a></p> : <div className="mx-auto max-w-[1480px] p-5 sm:p-8 lg:p-10">
+        {page === "users" ? session.user.crmRole === "ADMIN" ? <UsersPage currentUserId={session.user.id} /> : <p role="alert" className="p-8 text-danger">Somente administradores podem gerenciar usuários. <a href="#/leads" className="underline">Voltar aos leads</a></p> : page === "account" ? <AccountPage session={session} onSessionUpdated={onSessionUpdated} /> : <div className="mx-auto max-w-[1480px] p-5 sm:p-8 lg:p-10">
           <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <MetricCard label="Todos os leads" value={data?.total ?? 0} icon={UsersRound} active={status === "ALL"} onClick={() => setStatus("ALL")} />
             <MetricCard label="Novos" value={data?.byStatus.NEW ?? 0} icon={Sparkles} active={status === "NEW"} onClick={() => setStatus("NEW")} />
@@ -2370,39 +2376,40 @@ function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () =
             <MetricCard label="Fechados" value={data?.byStatus.WON ?? 0} icon={BarChart3} active={status === "WON"} onClick={() => setStatus("WON")} />
           </section>
 
-          <section className="mt-8 overflow-hidden rounded-2xl border border-[#d9d8d0] bg-[#fffdfa]">
-            <div className="flex flex-wrap gap-2 border-b border-[#d9d8d0] p-4" aria-label="Categoria do lead">
+          <section className="mt-8 overflow-hidden rounded-xl border border-line bg-surface">
+            <div className="flex flex-wrap gap-2 border-b border-line p-4" aria-label="Categoria do lead">
               {(["ALL", "SEARCH_ONLY", "REGISTRATION_REQUESTED"] as const).map((category) => (
                 <button key={category} type="button" aria-pressed={interest === category}
-                  className={`focus-ring rounded-lg px-4 py-2 text-sm font-semibold ${interest === category ? "bg-[#173f35] text-white" : "bg-[#eeebe3] text-[#46545e]"}`}
+                  className={`focus-ring rounded-lg px-4 py-2 text-sm font-semibold ${interest === category ? "bg-ink text-white" : "bg-surface-soft text-ink-soft"}`}
                   onClick={() => setInterest(category)}>
                   {category === "ALL" ? "Todas as categorias" : INTEREST_LABELS[category]}
                 </button>
               ))}
             </div>
-            <div className="flex flex-col gap-4 border-b border-[#d9d8d0] p-4 sm:p-5 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-col gap-4 border-b border-line p-4 sm:p-5 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex gap-2 overflow-x-auto pb-1 xl:pb-0">
-                <button className={`focus-ring shrink-0 rounded-full px-3 py-2 text-xs font-bold ${status === "ALL" ? "bg-[#173f35] text-white" : "bg-[#eeebe3] text-[#46545e]"}`} onClick={() => setStatus("ALL")}>Todos</button>
+                <button className={`focus-ring shrink-0 rounded-full px-3 py-2 text-xs font-bold ${status === "ALL" ? "bg-ink text-white" : "bg-surface-soft text-ink-soft"}`} onClick={() => setStatus("ALL")}>Todos</button>
                 {STATUS_ORDER.map((item) => (
-                  <button className={`focus-ring shrink-0 rounded-full px-3 py-2 text-xs font-bold ${status === item ? "bg-[#173f35] text-white" : "bg-[#eeebe3] text-[#46545e]"}`} onClick={() => setStatus(item)} key={item}>
+                  <button className={`focus-ring shrink-0 rounded-full px-3 py-2 text-xs font-bold ${status === item ? "bg-ink text-white" : "bg-surface-soft text-ink-soft"}`} onClick={() => setStatus(item)} key={item}>
                     {STATUS_META[item].shortLabel}
                   </button>
                 ))}
               </div>
               <label className="relative block w-full xl:max-w-xs">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#707b81]" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
                 <input
-                  className="focus-ring h-10 w-full rounded-xl border border-[#d9d8d0] bg-white pl-10 pr-3 text-sm outline-none"
+                  className="focus-ring h-10 w-full rounded-xl border border-line bg-white pl-10 pr-3 text-sm outline-none"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
+                  aria-label="Buscar leads por nome, marca ou WhatsApp"
                   placeholder="Buscar nome, marca ou WhatsApp"
                 />
               </label>
             </div>
 
-            {error && <p className="m-4 rounded-xl bg-[#fbe4df] px-4 py-3 text-sm text-[#b64b3f]">{error}</p>}
+            {error && <p className="m-4 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>}
             {loading && !data ? (
-              <div className="grid min-h-80 place-items-center"><LoaderCircle className="size-6 animate-spin text-[#26745f]" /></div>
+              <div className="grid min-h-80 place-items-center"><LoaderCircle className="size-6 animate-spin text-accent-dark" /></div>
             ) : data?.items.length === 0 ? (
               <EmptyState filtered={status !== "ALL" || interest !== "ALL" || Boolean(query)} />
             ) : (
@@ -2410,7 +2417,7 @@ function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () =
                 <div className="hidden overflow-x-auto md:block">
                   <table className="w-full border-collapse text-left">
                     <thead>
-                      <tr className="border-b border-[#d9d8d0] bg-[#eeebe3]/60 text-[11px] uppercase tracking-[0.08em] text-[#707b81]">
+                      <tr className="border-b border-line bg-surface-soft/60 text-[11px] uppercase tracking-[0.08em] text-muted">
                         <th className="px-5 py-3 font-bold">Contato</th>
                         <th className="px-5 py-3 font-bold">Marca e segmento</th>
                         <th className="px-5 py-3 font-bold">Origem</th>
@@ -2422,46 +2429,46 @@ function Crm({ session, onSignedOut }: { session: SessionData; onSignedOut: () =
                     <tbody>
                       {data?.items.map((lead) => (
                         <tr
-                          className="cursor-pointer border-b border-[#d9d8d0] transition last:border-0 hover:bg-[#e3f0e8]/45"
+                          className="cursor-pointer border-b border-line transition last:border-0 hover:bg-accent-soft/45"
                           key={lead.id}
                           tabIndex={0}
                           onClick={() => setSelectedId(lead.id)}
                           onKeyDown={(event) => event.key === "Enter" && setSelectedId(lead.id)}
                         >
                           <td className="px-5 py-4">
-                            <strong className="block text-sm text-[#173f35]">{lead.contactName}</strong>
-                            <a className="mt-1 block text-xs text-[#707b81] hover:text-[#167548]" href={whatsappUrl(lead.whatsapp)} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
+                            <strong className="block text-sm text-ink">{lead.contactName}</strong>
+                            <a className="mt-1 block text-xs text-muted hover:text-positive" href={whatsappUrl(lead.whatsapp)} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
                               {lead.whatsapp}
                             </a>
                           </td>
                           <td className="px-5 py-4">
-                            <strong className="block text-sm text-[#173f35]">{lead.brandName}</strong>
-                            <span className="mt-1 block max-w-xs truncate text-xs text-[#707b81]">{lead.segment}</span>
+                            <strong className="block text-sm text-ink">{lead.brandName}</strong>
+                            <span className="mt-1 block max-w-xs truncate text-xs text-muted">{lead.segment}</span>
                           </td>
-                          <td className="px-5 py-4 text-sm text-[#46545e]">{sourceLabel(lead)}<p className="mt-1 text-xs">{INTEREST_LABELS[lead.interest]}</p></td>
+                          <td className="px-5 py-4 text-sm text-ink-soft">{sourceLabel(lead)}<p className="mt-1 text-xs">{INTEREST_LABELS[lead.interest]}</p></td>
                           <td className="px-5 py-4"><StatusBadge status={lead.status} /></td>
-                          <td className="whitespace-nowrap px-5 py-4 text-xs text-[#707b81]">{formatDate(lead.createdAt)}</td>
-                          <td className="pr-5 text-[#707b81]"><ChevronRight className="size-4" /></td>
+                          <td className="whitespace-nowrap px-5 py-4 text-xs text-muted">{formatDate(lead.createdAt)}</td>
+                          <td className="pr-5 text-muted"><ChevronRight className="size-4" /></td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                <div className="divide-y divide-[#d9d8d0] md:hidden">
+                <div className="divide-y divide-line md:hidden">
                   {data?.items.map((lead) => (
-                    <button className="focus-ring block w-full p-4 text-left hover:bg-[#e3f0e8]/40" key={lead.id} onClick={() => setSelectedId(lead.id)}>
+                    <button className="focus-ring block w-full p-4 text-left hover:bg-accent-soft/40" key={lead.id} onClick={() => setSelectedId(lead.id)}>
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <strong className="text-sm text-[#173f35]">{lead.brandName}</strong>
-                          <p className="m-0 mt-1 text-xs text-[#707b81]">{lead.contactName} · {lead.whatsapp}</p>
-                          <p className="m-0 mt-1 text-xs text-[#26745f]">{INTEREST_LABELS[lead.interest]}</p>
+                          <strong className="text-sm text-ink">{lead.brandName}</strong>
+                          <p className="m-0 mt-1 text-xs text-muted">{lead.contactName} · {lead.whatsapp}</p>
+                          <p className="m-0 mt-1 text-xs text-accent-dark">{INTEREST_LABELS[lead.interest]}</p>
                         </div>
-                        <ChevronRight className="size-4 shrink-0 text-[#707b81]" />
+                        <ChevronRight className="size-4 shrink-0 text-muted" />
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-3">
                         <StatusBadge status={lead.status} />
-                        <span className="text-xs text-[#707b81]">{formatDate(lead.createdAt)}</span>
+                        <span className="text-xs text-muted">{formatDate(lead.createdAt)}</span>
                       </div>
                     </button>
                   ))}
@@ -2508,5 +2515,5 @@ export function App() {
   }
   if (session === undefined) return <Splash />;
   if (session === null) return <Login onSuccess={setSession} />;
-  return <Crm session={session} onSignedOut={() => setSession(null)} />;
+  return <Crm session={session} onSignedOut={() => setSession(null)} onSessionUpdated={setSession} />;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, CheckCircle2 } from "lucide-react";
 import RegistrationInterest from "@/app/components/consulta/RegistrationInterest";
 import { registrationCtaUrl } from "@/app/consulta/brand";
 import { sitePath } from "@/app/consulta/paths";
@@ -74,6 +74,32 @@ export default function ResultadosContent({
         </div>
       )}
 
+      {searchToken && !isPreview ? (
+        <RegistrationInterest key={searchToken} searchToken={searchToken} brandName={marca} />
+      ) : (
+        <div className="my-6 flex items-center justify-between gap-6 rounded-panel bg-accent-soft px-7 py-8 text-accent-dark max-tablet:block max-compact:px-5.5">
+          <div className="max-w-130">
+            <p className="m-0 text-[0.68rem] font-bold tracking-[0.14em] text-accent-dark uppercase">
+              Próximo passo
+            </p>
+            <h2 className="mb-0 mt-2 font-display text-[1.2rem] font-semibold tracking-[-0.03em]">
+              Quer transformar a pesquisa em proteção?
+            </h2>
+            <p className="mb-0 mt-2 text-sm leading-[1.65] text-ink-soft">
+              A consulta é um primeiro passo. Uma análise especializada ajuda a
+              avaliar classes e similaridades antes do pedido.
+            </p>
+          </div>
+          <a
+            className={`mt-1 inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-ink px-4 text-[0.76rem] font-bold text-white no-underline shadow-cta transition-[background,box-shadow,transform,color] duration-160 ease-out hover:-translate-y-px hover:bg-ink-soft hover:shadow-none ${focusRing}`}
+            href={registrationCtaUrl}
+          >
+            Quero registrar minha marca
+            <ArrowUpRight aria-hidden="true" size={15} strokeWidth={2.2} />
+          </a>
+        </div>
+      )}
+
       <div className="mb-6 flex items-end justify-between gap-6 max-compact:block">
         <div>
           <p className={`${eyebrow} mb-3`}>Resultado da pesquisa</p>
@@ -96,17 +122,26 @@ export default function ResultadosContent({
         </div>
       </div>
 
+
       {result.processos.length === 0 ? (
-        <div className="max-w-155 pb-2.5 pt-10.5">
-          <span className="mb-4 block text-[2.4rem] leading-none text-accent" aria-hidden="true">
-            ◌
-          </span>
+        <div
+          className="max-w-155 rounded-panel border border-positive-soft bg-positive-soft px-5 py-6 text-ink"
+          role="status"
+        >
+          <CheckCircle2
+            className="mb-4 text-positive"
+            aria-hidden="true"
+            size={30}
+            strokeWidth={1.8}
+          />
           <h2 className="m-0 font-display text-[1.25rem] font-semibold tracking-[-0.03em] text-ink">
-            Tente uma nova variação
+            Este é um bom sinal
           </h2>
-          <p className="mb-0 mt-2.25 max-w-117.5 text-[0.88rem] leading-[1.6] text-muted">
-            Não encontramos processos para esse termo na primeira página da
-            pesquisa. Experimente uma grafia mais curta.
+          <p className="mb-0 mt-2.25 max-w-117.5 text-[0.88rem] leading-[1.6] text-ink-soft">
+            Não encontramos processos para “{marca}” na pesquisa. Isso indica
+            que não há um registro coincidente entre os resultados consultados,
+            mas uma análise das classes e de marcas semelhantes ajuda a
+            confirmar o melhor caminho para o registro.
           </p>
         </div>
       ) : (
@@ -121,22 +156,22 @@ export default function ResultadosContent({
               </caption>
               <thead>
                 <tr>
-                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
+                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-xs font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
                     Processo
                   </th>
-                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
+                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-xs font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
                     Marca
                   </th>
-                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
+                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-xs font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
                     Titular
                   </th>
-                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
+                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-xs font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
                     Situação
                   </th>
-                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
+                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-xs font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
                     Classe
                   </th>
-                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-[0.66rem] font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
+                  <th className="border-b border-line bg-surface-soft px-4.5 py-4 text-xs font-bold tracking-widest text-muted uppercase whitespace-nowrap" scope="col">
                     Prioridade
                   </th>
                 </tr>
@@ -147,7 +182,7 @@ export default function ResultadosContent({
                     className="transition-colors hover:bg-background last:[&>td]:border-b-0"
                     key={`${processo.numero ?? "processo"}-${processo.classe ?? "classe"}-${index}`}
                   >
-                    <td className="border-b border-line px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
+                    <td className="border-b border-line px-4.5 py-4.5 align-top text-sm leading-[1.45] text-ink-soft">
                       <strong className="block text-[0.82rem] tracking-[0.02em] text-ink">
                         {processo.numero || "Não informado"}
                       </strong>
@@ -155,7 +190,7 @@ export default function ResultadosContent({
                         {processo.registro || "Registro não informado"}
                       </span>
                     </td>
-                    <td className="border-b border-line px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
+                    <td className="border-b border-line px-4.5 py-4.5 align-top text-sm leading-[1.45] text-ink-soft">
                       <strong className="block text-[0.82rem] text-ink">
                         {processo.marca || "Não informada"}
                       </strong>
@@ -163,18 +198,18 @@ export default function ResultadosContent({
                         {processo.tipo || "Tipo não informado"}
                       </span>
                     </td>
-                    <td className="border-b border-line px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
+                    <td className="border-b border-line px-4.5 py-4.5 align-top text-sm leading-[1.45] text-ink-soft">
                       {processo.titular || "Não informado"}
                     </td>
-                    <td className="border-b border-line px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
+                    <td className="border-b border-line px-4.5 py-4.5 align-top text-sm leading-[1.45] text-ink-soft">
                       <span className={`${statusPill} ${getStatusTone(processo.situacao)}`}>
                         {processo.situacao || "Não informada"}
                       </span>
                     </td>
-                    <td className="border-b border-line px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
+                    <td className="border-b border-line px-4.5 py-4.5 align-top text-sm leading-[1.45] text-ink-soft">
                       {processo.classe || "Não informada"}
                     </td>
-                    <td className="border-b border-line px-4.5 py-4.5 align-top text-[0.81rem] leading-[1.45] text-ink-soft">
+                    <td className="border-b border-line px-4.5 py-4.5 align-top text-sm leading-[1.45] text-ink-soft">
                       {processo.prioridade || "Não informada"}
                     </td>
                   </tr>
@@ -198,31 +233,6 @@ export default function ResultadosContent({
         </div>
       )}
 
-      {searchToken && !isPreview ? (
-        <RegistrationInterest key={searchToken} searchToken={searchToken} brandName={marca} />
-      ) : (
-        <div className="mt-8 flex items-center justify-between gap-6 rounded-panel bg-ink px-7 py-6 text-white max-tablet:block max-compact:px-5.5">
-          <div className="max-w-130">
-            <p className="m-0 text-[0.68rem] font-bold tracking-[0.14em] text-accent uppercase">
-              Próximo passo
-            </p>
-            <h2 className="mb-0 mt-2 font-display text-[1.2rem] font-semibold tracking-[-0.03em]">
-              Quer transformar a pesquisa em proteção?
-            </h2>
-            <p className="mb-0 mt-2 text-[0.8rem] leading-[1.55] text-ink-on-dark">
-              A consulta é um primeiro passo. Uma análise especializada ajuda a
-              avaliar classes e similaridades antes do pedido.
-            </p>
-          </div>
-          <a
-            className={`mt-1 inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-cta px-4 text-[0.76rem] font-bold text-white no-underline shadow-cta transition-[background,box-shadow,transform,color] duration-160 ease-out hover:-translate-y-px hover:bg-accent-dark hover:shadow-none ${focusRing}`}
-            href={registrationCtaUrl}
-          >
-            Quero registrar minha marca
-            <ArrowUpRight aria-hidden="true" size={15} strokeWidth={2.2} />
-          </a>
-        </div>
-      )}
     </section>
   );
 }

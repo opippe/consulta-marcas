@@ -1,62 +1,14 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Raleway:wght@500;600;700&display=swap");
 @import "tailwindcss";
+@import "../shared/brand-theme.css";
 
-:root {
-  --background: #f6f2ea;
-  --surface: #fffdfa;
-  --surface-soft: #eeebe3;
-  --ink: #173F35;
-  --ink-soft: #46545e;
-  --muted: #707b81;
-  --line: #d9d8d0;
-  --line-strong: #b8c0bd;
-  --accent: #79b896;
-  --accent-dark: #2f6b52;
-  --accent-soft: #e3f0e8;
-  --cta: #2fbf73;
-  --cta-dark: #167548;
-  --cta-soft: #ddf4e6;
-  --positive: #26745f;
-  --positive-soft: #dceee7;
-  --warning: #91671b;
-  --warning-soft: #fff0c8;
-  --warning-line: #ead6a5;
-  --danger: #b64b3f;
-  --danger-soft: #fbe4df;
-  --ink-on-dark: #d9d6d0;
-  --shadow: 0 1.5rem 3.5rem rgba(27, 39, 50, 0.11);
-}
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--ink);
-  --color-surface: var(--surface);
-  --color-surface-soft: var(--surface-soft);
-  --color-ink: var(--ink);
-  --color-ink-soft: var(--ink-soft);
-  --color-muted: var(--muted);
-  --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
-  --color-accent: var(--accent);
-  --color-accent-dark: var(--accent-dark);
-  --color-accent-soft: var(--accent-soft);
-  --color-cta: var(--cta);
-  --color-cta-dark: var(--cta-dark);
-  --color-cta-soft: var(--cta-soft);
-  --color-positive: var(--positive);
-  --color-positive-soft: var(--positive-soft);
-  --color-warning: var(--warning);
-  --color-warning-soft: var(--warning-soft);
-  --color-warning-line: var(--warning-line);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
-  --color-ink-on-dark: var(--ink-on-dark);
-  --font-sans: "DM Sans", "Segoe UI", Arial, sans-serif;
-  --font-display: "Raleway", "Segoe UI", Arial, sans-serif;
+  --font-sans: var(--font-poppins), "Poppins", "Segoe UI", Arial, sans-serif;
+  --font-display: var(--font-poppins), "Poppins", "Segoe UI", Arial, sans-serif;
   --shadow-site: var(--shadow);
-  --shadow-cta: 0 0.75rem 1.5rem rgba(47, 191, 115, 0.28);
+  --shadow-cta: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.08);
   --shadow-source-dot: 0 0 0 0.25rem var(--positive-soft);
-  --shadow-input-focus: 0 0 0 0.25rem rgba(121, 184, 150, 0.24);
+  --shadow-input-focus: 0 0 0 0.25rem rgba(255, 90, 10, 0.18);
   --shadow-results: 0 0.75rem 2.1875rem rgba(27, 39, 50, 0.08);
   --radius-mark: 0.75rem;
   --radius-status: 999px;
@@ -93,11 +45,9 @@
 
   body {
     margin: 0;
-    background:
-      radial-gradient(circle at 92% 0%, rgba(121, 184, 150, 0.15), transparent 27rem),
-      var(--background);
+    background: var(--background);
     color: var(--ink);
-    font-family: "DM Sans", "Segoe UI", Arial, sans-serif;
+    font-family: var(--font-poppins), "Poppins", "Segoe UI", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 

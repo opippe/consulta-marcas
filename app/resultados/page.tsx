@@ -11,6 +11,7 @@ import { apiPath, sitePath } from "@/app/consulta/paths";
 import { PREVIEW_MARCA, PREVIEW_RESULT } from "@/app/consulta/preview";
 import type { ConsultaApiResponse, ConsultaState } from "@/app/consulta/types";
 import { focusRing } from "@/app/consulta/ui";
+import "./results.css";
 
 export default function ResultadosPage() {
   const router = useRouter();
@@ -80,12 +81,16 @@ export default function ResultadosPage() {
     : activeConsulta?.marca ?? fallbackBrandName;
 
   return (
-    <main className="min-h-screen overflow-x-clip">
-      <ConsultaHeader registrationHref={searchToken && !isPreview ? "#registrar" : undefined} />
+    <main className="results-page min-h-screen">
+      <ConsultaHeader
+        logoHref={null}
+        showNavigation={false}
+        showRegistrationCta={false}
+      />
 
-      <div className="mx-auto w-shell max-w-295 pb-23.5 pt-12 max-compact:pb-18 max-compact:pt-6 max-compact:w-shell-mobile">
+      <div className="mx-auto w-shell max-w-310 pb-1 pt-4 max-compact:pt-6 max-compact:w-shell-mobile">
         <Link
-          className={`mb-8 inline-flex items-center gap-2 text-[0.78rem] font-bold text-accent-dark no-underline hover:underline hover:underline-offset-3 ${focusRing}`}
+          className={`inline-flex items-center gap-2 text-[0.78rem] font-bold text-accent-dark no-underline hover:underline hover:underline-offset-3 ${focusRing}`}
           href={sitePath("/")}
         >
           <span aria-hidden="true">←</span>
