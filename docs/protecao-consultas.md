@@ -147,29 +147,48 @@ visitantes utilizando o site. Este teste reduz temporariamente o limite de leitu
    Estamos habilitando temporariamente as leituras para executar o teste, mantendo
    a chamada paga desligada. Se houver falha, volte o valor para `false`.
 3. Aguarde 65 segundos sem usar as páginas de resultados. No **PowerShell do seu
-   computador**, execute as quatro linhas, uma após a outra:
+   computador**, execute o bloco abaixo. Primeiro são feitas três leituras normais;
+   depois os cabeçalhos são testados separadamente, com a cota já esgotada:
 
 ```powershell
-curl.exe -sS -o NUL -w "%{http_code}\n" "https://api.55marcas.com.br/api/consultas?token=teste"
-curl.exe -sS -o NUL -w "%{http_code}\n" -H "X-Real-IP: 203.0.113.10" -H "CF-Connecting-IP: 203.0.113.10" -H "X-Forwarded-For: 203.0.113.10" "https://api.55marcas.com.br/api/consultas?token=teste"
-curl.exe -sS -o NUL -w "%{http_code}\n" -H "X-Real-IP: 203.0.113.11" -H "CF-Connecting-IP: 203.0.113.11" -H "X-Forwarded-For: 203.0.113.11" "https://api.55marcas.com.br/api/consultas?token=teste"
-curl.exe -sS -o NUL -w "%{http_code}\n" -H "X-Public-Client-IP: 203.0.113.12" "https://api.55marcas.com.br/api/consultas?token=teste"
+$consultaTesteUrl = 'https://api.55marcas.com.br/api/consultas?token=teste'
+1..3 | ForEach-Object { curl.exe -sS -o NUL -w "%{http_code}\n" $consultaTesteUrl }
+curl.exe -sS -o NUL -w "%{http_code}\n" -H "X-Real-IP: 203.0.113.10" $consultaTesteUrl
+curl.exe -sS -o NUL -w "%{http_code}\n" -H "X-Forwarded-For: 203.0.113.11" $consultaTesteUrl
+curl.exe -sS -o NUL -w "%{http_code}\n" -H "X-Public-Client-IP: 203.0.113.12" $consultaTesteUrl
 ```
 
-O resultado esperado é **400, 400, 429, 503**, nessa ordem. O 400 é intencional:
-o token `teste` é inválido. O 429 demonstra que trocar cabeçalhos não abriu nova
-cota. O 503 demonstra que o encaminhamento sem credencial foi recusado. Os IPs
-acima são exemplos reservados para documentação, não precisam ser substituídos.
+O resultado esperado é **400, 400, 429, 429, 429, 503**, nessa ordem. Os dois
+primeiros 400 são intencionais: o token `teste` é inválido. O terceiro pedido
+confirma o limite de leituras. Os dois 429 seguintes demonstram que os cabeçalhos
+não abriram nova cota. O 503 demonstra que o encaminhamento sem credencial foi
+recusado. Os IPs acima são exemplos reservados para documentação, não precisam
+ser substituídos. Nenhuma dessas chamadas consulta a InfoSimples.
+
+**Correção do roteiro anterior:** não envie `CF-Connecting-IP` junto dos outros
+cabeçalhos. A Cloudflare pode rejeitar esse pedido antes da API com HTTP 403 e
+`error code: 1000`. Esse comportamento é documentado e foi reproduzido em
+09/09/2026 em `api.55marcas.com.br`. Não demonstra falha do limitador e não exige
+desativar a proteção da Cloudflare. Na mesma verificação, três leituras normais
+retornaram 400, 400 e 429; os testes separados de `X-Real-IP` e `X-Forwarded-For`
+mantiveram 429. Isso não substitui o teste de independência entre redes.
+
+Se precisar identificar um 403, use `curl.exe -sS -i` no lugar de `-o NUL -w ...`
+para ver cabeçalhos e corpo. O status sozinho não informa qual camada recusou o
+pedido. [Cloudflare: causas do erro 1000](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1000/).
 
 4. Após saturar a cota, conecte o computador a outra rede com IP de saída diferente
-   (por exemplo, o acesso pessoal do celular usando dados móveis) e execute somente
-   a primeira linha: deve responder **400**, sem compartilhar o bloqueio anterior.
+   (por exemplo, o acesso pessoal do celular usando dados móveis) e execute uma
+   leitura simples: `curl.exe -sS -o NUL -w "%{http_code}\n" $consultaTesteUrl`.
+   Deve responder **400**, sem compartilhar o bloqueio anterior. Faça isso dentro
+   da mesma janela de 60 segundos; se ela expirar, a comparação será inconclusiva.
 5. No **Railway → consulta-marcas → Settings → Networking**, copie o domínio
    público `…up.railway.app`, se existir. Após esperar outra janela de 65 segundos,
-   repita as quatro linhas substituindo apenas `api.55marcas.com.br` por esse domínio.
+   repita o bloco substituindo apenas `api.55marcas.com.br` por esse domínio.
    Faça também a verificação de independência entre redes. Se não houver domínio
    Railway público, registre isso; não é necessário criar um só para este teste.
-6. Se a terceira linha der 400, se todas derem 503 ou se redes diferentes dividirem
+6. Se a terceira leitura normal der 400, se os cabeçalhos permitirem novas leituras
+   com a cota ainda esgotada, se todas derem 503 ou se redes diferentes dividirem
    o bloqueio, não ative as consultas. Volte `CLIENT_IP_VERIFIED=false`, restaure
    `PUBLIC_READS_PER_MINUTE=60`, aplique no Railway e corrija a entrada antes de seguir.
    Os testes são verificações práticas; uma mudança futura de proxy/CDN exige repetir
@@ -310,8 +329,10 @@ sem enviar automaticamente ao terminar. Ler resultados nunca consulta a InfoSimp
 3. Em ambiente de homologação com o mesmo ingresso, manter consultas desligadas,
    habilitar a identificação para testar somente as rotas de leitura e configurar
    temporariamente `PUBLIC_READS_PER_MINUTE=2`. Usar um token inválido, sem dados reais:
-   duas leituras devem responder 400 e a terceira 429. Variar `X-Real-IP`,
-   `CF-Connecting-IP` e `X-Forwarded-For` do cliente não pode criar novas cotas.
+   duas leituras normais devem responder 400 e a terceira 429. Testar `X-Real-IP`
+   e `X-Forwarded-For` separadamente não pode criar novas cotas. `CF-Connecting-IP`
+   pode ser recusado antes da API pela Cloudflare com 403/1000; esse pedido não
+   deve ser usado para contabilizar as três leituras do teste básico.
    Uma segunda conexão com IP de saída diferente deve possuir cota independente.
    Repetir tanto pelo domínio personalizado quanto pelo domínio Railway, e pelos
    proxies opcionais que forem realmente utilizados. Cabeçalhos `X-Public-*`

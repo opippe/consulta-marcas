@@ -275,7 +275,7 @@ function Login({ onSuccess }: { onSuccess: (session: SessionData) => void }) {
               </p>
             )}
             <button
-              className="focus-ring text-white flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent font-bold text-ink transition hover:bg-accent-dark hover:text-white disabled:cursor-wait disabled:opacity-70"
+              className="focus-ring text-white flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent font-bold transition hover:bg-accent-dark hover:text-white disabled:cursor-wait disabled:opacity-70"
               type="submit"
               disabled={loading}
             >
@@ -556,7 +556,7 @@ function ProposalEditor({
 
   return (
     <div
-      className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-ink/45 p-3 backdrop-blur-[2px] sm:p-6"
+      className="fixed inset-0 z-70 grid place-items-center overflow-y-auto bg-ink/45 p-3 backdrop-blur-[2px] sm:p-6"
       onMouseDown={(event) => {
         event.stopPropagation();
         if (event.target === event.currentTarget) onClose();
@@ -768,7 +768,7 @@ function ProposalEditor({
             Cancelar
           </button>
           <button
-            className="focus-ring text-white flex h-11 items-center gap-2 rounded-xl bg-accent px-5 text-sm font-bold text-ink hover:bg-accent-dark hover:text-white disabled:cursor-wait disabled:opacity-60"
+            className="focus-ring text-white flex h-11 items-center gap-2 rounded-xl bg-accent px-5 text-sm font-bold hover:bg-accent-dark hover:text-white disabled:cursor-wait disabled:opacity-60"
             type="submit"
             disabled={saving}
           >
@@ -840,7 +840,7 @@ function ContractEditor({
 
   return (
     <div
-      className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-ink/45 p-3 backdrop-blur-[2px] sm:p-6"
+      className="fixed inset-0 z-70 grid place-items-center overflow-y-auto bg-ink/45 p-3 backdrop-blur-[2px] sm:p-6"
       onMouseDown={(event) => {
         event.stopPropagation();
         if (event.target === event.currentTarget) onClose();
@@ -901,7 +901,7 @@ function ContractEditor({
               </span>
             </div>
             <textarea
-              className="focus-ring min-h-[32rem] w-full resize-y rounded-xl border border-line bg-white p-4 font-mono text-[13px] leading-6 text-ink outline-none"
+              className="focus-ring min-h-128 w-full resize-y rounded-xl border border-line bg-white p-4 font-mono text-[13px] leading-6 text-ink outline-none"
               required
               minLength={80}
               maxLength={40_000}
@@ -1276,7 +1276,7 @@ function LeadDrawer({
                 <InfoCard icon={MessageCircle} label="WhatsApp" value={data.lead.whatsapp} />
               </div>
               <a
-                className="focus-ring text-white mt-3 flex h-11 items-center justify-center gap-2 rounded-xl bg-accent text-sm font-bold text-ink transition hover:bg-accent-dark hover:text-white"
+                className="focus-ring text-white mt-3 flex h-11 items-center justify-center gap-2 rounded-xl bg-accent text-sm font-bold transition hover:bg-accent-dark hover:text-white"
                 href={whatsappUrl(data.lead.whatsapp)}
                 target="_blank"
                 rel="noreferrer"
@@ -2368,7 +2368,7 @@ function Crm({ session, onSignedOut, onSessionUpdated }: { session: SessionData;
           </div>}
         </header>
 
-        {page === "users" ? session.user.crmRole === "ADMIN" ? <UsersPage currentUserId={session.user.id} /> : <p role="alert" className="p-8 text-danger">Somente administradores podem gerenciar usuários. <a href="#/leads" className="underline">Voltar aos leads</a></p> : page === "account" ? <AccountPage session={session} onSessionUpdated={onSessionUpdated} /> : <div className="mx-auto max-w-[1480px] p-5 sm:p-8 lg:p-10">
+        {page === "users" ? session.user.crmRole === "ADMIN" ? <UsersPage currentUserId={session.user.id} /> : <p role="alert" className="p-8 text-danger">Somente administradores podem gerenciar usuários. <a href="#/leads" className="underline">Voltar aos leads</a></p> : page === "account" ? <AccountPage session={session} onSessionUpdated={onSessionUpdated} /> : <div className="mx-auto max-w-370 p-5 sm:p-8 lg:p-10">
           <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <MetricCard label="Todos os leads" value={data?.total ?? 0} icon={UsersRound} active={status === "ALL"} onClick={() => setStatus("ALL")} />
             <MetricCard label="Novos" value={data?.byStatus.NEW ?? 0} icon={Sparkles} active={status === "NEW"} onClick={() => setStatus("NEW")} />

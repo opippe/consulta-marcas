@@ -105,8 +105,8 @@ export default function ContactFields({ compact = false }: { compact?: boolean }
             </div>
           </details>
 
-          <div className="mt-5 space-y-3 border-t border-line pt-5">
-            <label className="flex items-start gap-3 text-[0.72rem] leading-[1.5] text-ink-soft">
+          <div className="mt-5 mb-5 space-y-3 border-t border-line pt-5">
+            <label className="flex items-start gap-3 text-[0.72rem] leading-normal text-ink-soft">
               <input
                 className="mt-0.5 size-4 shrink-0 accent-accent-dark"
                 name="operationalConsent"
@@ -115,7 +115,7 @@ export default function ContactFields({ compact = false }: { compact?: boolean }
               />
               Autorizo a 55 Marcas a entrar em contato pelo WhatsApp sobre esta consulta e o registro da minha marca.
             </label>
-            <label className="flex items-start gap-3 text-[0.72rem] leading-[1.5] text-ink-soft">
+            <label className="flex items-start gap-3 text-[0.72rem] leading-normal text-ink-soft">
               <input
                 className="mt-0.5 size-4 shrink-0 accent-accent-dark"
                 name="marketingConsent"
