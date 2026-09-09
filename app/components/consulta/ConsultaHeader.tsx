@@ -20,7 +20,7 @@ export default function ConsultaHeader({
 }: ConsultaHeaderProps) {
   const logo = (
     <Image
-      src={publicAsset("/55-marcas-brand-kit/brand/logo-light.svg")}
+      src={publicAsset("/55-marcas-brand-kit/brand/logo-light2.png")}
       alt="55 marcas."
       width={185}
       height={26}

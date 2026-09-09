@@ -15,7 +15,7 @@ export default function ConsultaFooter() {
   return (
     <footer className="mx-auto mt-20 w-shell max-w-310 border-t border-line pb-8 pt-10 text-xs leading-relaxed text-muted max-compact:w-shell-mobile">
       <div className="flex items-start justify-between gap-10 max-tablet:flex-col">
-        <div><Link className={`inline-flex min-h-11 items-center ${focusRing}`} href={sitePath("/")}><Image src={publicAsset("/55-marcas-brand-kit/brand/logo-light.svg")} alt="55 marcas. — início" width={180} height={25} unoptimized /></Link><p className="mt-3 text-sm text-ink-soft">Você cria. A gente protege.</p>
+        <div><Link className={`inline-flex min-h-11 items-center ${focusRing}`} href={sitePath("/")}><Image src={publicAsset("/55-marcas-brand-kit/brand/logo-light2.png")} alt="55 marcas. — início" width={180} height={25} unoptimized /></Link><p className="mt-3 text-sm text-ink-soft">Você cria. A gente protege.</p>
           <nav className="mt-5 flex flex-wrap gap-3" aria-label="Redes sociais">
             {socialLinks.map(({ label, href, Icon }) => (
               <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={`${label} (abre em nova aba)`} title={label}
