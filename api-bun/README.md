@@ -59,10 +59,15 @@ persistido em texto; quando `RATE_LIMIT_SALT` está definido, a API grava apenas
 uma impressão SHA-256 usada para limitar consultas repetidas.
 
 A pesquisa exige os campos de contato de `leadInputSchema` (sem `searchToken`),
-além de `marca`. `registrationRequested` indica o clique prévio no CTA.
+além de `marca` e `turnstileToken`. `registrationRequested` indica o clique prévio no CTA.
 Contato, consentimentos e lead são gravados antes da chamada ao provedor.
 Consultas que falham ficam com status `FAILED`; não são exibidas como zero resultados.
 O endpoint de interesse é idempotente e não altera a etapa comercial.
+
+Limites, Turnstile, proxies confiáveis e testes isolados estão descritos em
+[Proteção das consultas](../docs/protecao-consultas.md). Todas as rotas REST públicas
+de consultas/leads exigem identificação confiável. Use as chaves oficiais de teste
+dos exemplos somente no desenvolvimento local.
 
 Validação local com banco migrado: `bun test tests/lead-capture.test.ts`.
 O teste simula a InfoSimples e desfaz todos os registros em uma transação.

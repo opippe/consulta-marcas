@@ -102,12 +102,23 @@ export type InfosimplesSnapshot = {
   elapsedTimeInMilliseconds?: number;
 };
 
+export const publicRateEvents = pgTable("public_rate_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  group: varchar("group", { length: 16 }).notNull(),
+  fingerprint: varchar("fingerprint", { length: 64 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, table => [
+  index("public_rate_events_key_time_idx").on(table.group, table.fingerprint, table.createdAt),
+  index("public_rate_events_created_idx").on(table.createdAt),
+]);
+
 export const searches = pgTable(
   "searches",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     publicTokenHash: varchar("public_token_hash", { length: 64 }).notNull(),
     requestFingerprint: varchar("request_fingerprint", { length: 64 }),
+    requestWhatsapp: varchar("request_whatsapp", { length: 20 }),
     brandName: varchar("brand_name", { length: 120 }).notNull(),
     queryType: varchar("query_type", { length: 20 }).notNull().default("exact"),
     textualSearch: boolean("textual_search").notNull().default(false),
@@ -129,6 +140,8 @@ export const searches = pgTable(
     uniqueIndex("searches_public_token_hash_uq").on(table.publicTokenHash),
     index("searches_created_at_idx").on(table.createdAt),
     index("searches_request_fingerprint_idx").on(table.requestFingerprint),
+    index("searches_ip_created_idx").on(table.requestFingerprint, table.createdAt),
+    index("searches_whatsapp_created_idx").on(table.requestWhatsapp, table.createdAt),
   ],
 );
 

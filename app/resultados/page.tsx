@@ -11,6 +11,9 @@ import { apiPath, sitePath } from "@/app/consulta/paths";
 import { PREVIEW_MARCA, PREVIEW_RESULT } from "@/app/consulta/preview";
 import type { ConsultaApiResponse, ConsultaState } from "@/app/consulta/types";
 import { focusRing } from "@/app/consulta/ui";
+import "./results.css";
+import { apiError } from "@/app/consulta/api-error";
+import { useCooldown } from "@/app/consulta/use-cooldown";
 
 export default function ResultadosPage() {
   const router = useRouter();
@@ -25,6 +28,9 @@ export default function ResultadosPage() {
   const [persistedConsulta, setPersistedConsulta] =
     useState<ConsultaState | null>(null);
   const [loadStatus, setLoadStatus] = useState<"idle" | "error">("idle");
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const { coolingDown, registerError } = useCooldown();
 
   useEffect(() => {
     if (!searchToken || isPreview || contextMatchesToken) {
@@ -42,7 +48,7 @@ export default function ResultadosPage() {
           error?: string;
         };
         if (!response.ok) {
-          throw new Error(payload.error ?? "Não foi possível abrir a consulta.");
+          throw apiError(response, payload, "Não foi possível abrir a consulta.");
         }
 
         setPersistedConsulta({
@@ -62,10 +68,12 @@ export default function ResultadosPage() {
           return;
         }
         setLoadStatus("error");
+        registerError(error);
+        setLoadError(error instanceof Error ? error.message : "Não foi possível abrir a consulta.");
       });
 
     return () => controller.abort();
-  }, [contextMatchesToken, fallbackBrandName, isPreview, searchToken]);
+  }, [contextMatchesToken, fallbackBrandName, isPreview, searchToken, retry, registerError]);
 
   const activeConsulta = contextMatchesToken ? consulta : persistedConsulta;
   const isLoadingPersistedConsulta = Boolean(
@@ -80,12 +88,16 @@ export default function ResultadosPage() {
     : activeConsulta?.marca ?? fallbackBrandName;
 
   return (
-    <main className="min-h-screen overflow-x-clip">
-      <ConsultaHeader registrationHref={searchToken && !isPreview ? "#registrar" : undefined} />
+    <main className="results-page min-h-screen">
+      <ConsultaHeader
+        logoHref={null}
+        showNavigation={false}
+        showRegistrationCta={false}
+      />
 
-      <div className="mx-auto w-shell max-w-295 pb-23.5 pt-12 max-compact:pb-18 max-compact:pt-6 max-compact:w-shell-mobile">
+      <div className="mx-auto w-shell max-w-310 pb-1 pt-4 max-compact:pt-6 max-compact:w-shell-mobile">
         <Link
-          className={`mb-8 inline-flex items-center gap-2 text-[0.78rem] font-bold text-accent-dark no-underline hover:underline hover:underline-offset-3 ${focusRing}`}
+          className={`inline-flex items-center gap-2 text-[0.78rem] font-bold text-accent-dark no-underline hover:underline hover:underline-offset-3 ${focusRing}`}
           href={sitePath("/")}
         >
           <span aria-hidden="true">←</span>
@@ -103,10 +115,16 @@ export default function ResultadosPage() {
             />
             Carregando sua consulta...
           </div>
+        ) : loadStatus === "error" ? (
+          <section className="rounded-panel border border-line bg-surface p-6">
+            <p role="alert">{loadError}</p>
+            <button type="button" className={`min-h-12 underline ${focusRing}`} disabled={coolingDown}
+              onClick={() => { setLoadStatus("idle"); setRetry(value => value + 1); }}>Carregar resultados novamente</button>
+          </section>
         ) : (
           <ResultadosContent
             marca={marca}
-            result={loadStatus === "error" ? null : result}
+            result={result}
             isPreview={isPreview}
             searchToken={searchToken ?? activeConsulta?.searchToken}
             onClosePreview={() => router.push(sitePath("/"))}

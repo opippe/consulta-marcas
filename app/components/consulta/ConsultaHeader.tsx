@@ -1,42 +1,53 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
-import { brandName, registrationCtaUrl } from "@/app/consulta/brand";
-import MarcaCertaMark from "@/app/components/consulta/MarcaCertaMark";
-import { sitePath } from "@/app/consulta/paths";
+import { registrationCtaUrl } from "@/app/consulta/brand";
+import { publicAsset, sitePath } from "@/app/consulta/paths";
 import { focusRing } from "@/app/consulta/ui";
 
-export default function ConsultaHeader({ registrationHref = registrationCtaUrl }: { registrationHref?: string }) {
+type ConsultaHeaderProps = {
+  registrationHref?: string;
+  showNavigation?: boolean;
+  showRegistrationCta?: boolean;
+  logoHref?: string | null;
+};
+
+export default function ConsultaHeader({
+  registrationHref = registrationCtaUrl,
+  showNavigation = true,
+  showRegistrationCta = true,
+  logoHref = sitePath("/"),
+}: ConsultaHeaderProps) {
+  const logo = (
+    <Image
+      src={publicAsset("/55-marcas-brand-kit/brand/logo-light.svg")}
+      alt="55 marcas."
+      width={185}
+      height={26}
+      priority
+      unoptimized
+    />
+  );
+
   return (
-    <header className="sticky top-0 z-50 mx-auto flex min-h-20 w-shell max-w-295 items-center justify-between gap-6 border-b border-line bg-background/95 backdrop-blur-sm max-compact:min-h-19 max-compact:w-full max-compact:mx-0 max-compact:px-5">
-      <Link
-        className={`inline-flex shrink-0 items-center gap-3 text-[0.94rem] font-bold tracking-[-0.02em] text-ink no-underline ${focusRing}`}
-        href={sitePath("/")}
-        aria-label={`${brandName} - início`}
-      >
-        <MarcaCertaMark compact />
-        <span className="font-display text-[1.08rem] font-semibold">{brandName}</span>
-      </Link>
-      <nav
-        className="flex items-center gap-8 text-sm font-semibold tracking-[0.02em] text-ink-soft max-tablet:hidden"
-        aria-label="Navegação principal"
-      >
-        <Link className={`no-underline transition-colors hover:text-accent-dark ${focusRing}`} href={sitePath("/#servicos")}>
-          Serviços
+    <header className="site-header mx-auto flex min-h-24 w-shell max-w-310 items-center justify-between gap-6 border-b border-line bg-background max-compact:min-h-20 max-compact:w-shell-mobile">
+      {logoHref ? (
+        <Link className={`inline-flex min-h-11 items-center ${focusRing}`} href={logoHref} aria-label="55 marcas. — início">
+          {logo}
         </Link>
-        <Link className={`no-underline transition-colors hover:text-accent-dark ${focusRing}`} href={sitePath("/#como-funciona")}>
-          Como funciona
-        </Link>
-        <Link className={`no-underline transition-colors hover:text-accent-dark ${focusRing}`} href={sitePath("/#faq")}>
-          Dúvidas
-        </Link>
-      </nav>
-      <a
-        className={`inline-flex min-h-10 items-center gap-2 rounded-lg bg-cta px-4 text-[0.73rem] font-bold text-white no-underline shadow-cta transition-[background,box-shadow,transform,color] duration-160 ease-out hover:-translate-y-px hover:bg-cta-dark hover:text-white hover:shadow-none ${focusRing}`}
-        href={registrationHref}
-      >
-        Quero registrar
-        <ArrowUpRight aria-hidden="true" size={15} strokeWidth={2.2} />
-      </a>
+      ) : (
+        <div className="inline-flex min-h-11 items-center">{logo}</div>
+      )}
+      {showNavigation && (
+        <nav className="flex items-center gap-8 text-sm text-ink-soft max-tablet:hidden" aria-label="Navegação principal">
+          {[["Serviços", "servicos"], ["Como funciona", "como-funciona"], ["Dúvidas", "faq"]].map(([label, id]) => <Link className={`inline-flex min-h-11 items-center no-underline hover:text-accent-dark ${focusRing}`} href={sitePath(`/#${id}`)} key={id}>{label}</Link>)}
+        </nav>
+      )}
+      {showRegistrationCta && (
+        <a className={`inline-flex min-h-11 items-center gap-3 rounded-full border border-[#ff5a0a] text-[#ff5a0a] px-5 text-[0.8rem] font-semibold no-underline transition-colors hover:bg-accent hover:text-white max-compact:px-3 max-compact:text-xs ${focusRing}`} href={registrationHref}>
+          {registrationHref === "#diagnostico" ? "Consultar marca" : "Quero registrar"}<ArrowUpRight size={17} aria-hidden="true" />
+        </a>
+      )}
     </header>
   );
 }

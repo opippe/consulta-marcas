@@ -1,5 +1,7 @@
 # Instruções para agentes
 
+Sempre use o servidor MCP ui-skills para consultar práticas recomendadas de design de interfaces, acessibilidade, motion e design de componentes front-end quando estiver criando ou refatorando telas.
+
 ## Estado do projeto
 
 Este projeto ainda está em desenvolvimento e não está em produção.

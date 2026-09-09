@@ -1,4 +1,5 @@
 import { initTRPC, TRPCError } from "@trpc/server";
+import { hashPassword, verifyPassword } from "better-auth/crypto";
 import {
   and,
   asc,
@@ -7,13 +8,23 @@ import {
   eq,
   ilike,
   inArray,
+  ne,
   or,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "./auth";
-import { session as authSession, user } from "./db/auth-schema";
-import { createCrmUser, createCrmUserSchema, crmUserFields, getCrmAccess, resolveCrmRole } from "./lib/crm-users";
+import { account as authAccount, session as authSession, user } from "./db/auth-schema";
+import {
+  changeCrmPasswordSchema,
+  createCrmUser,
+  createCrmUserSchema,
+  crmUserFields,
+  getCrmAccess,
+  resolveCrmRole,
+  updateCrmProfileSchema,
+} from "./lib/crm-users";
 import { getDb } from "./db/client";
 import {
   contacts,
@@ -233,6 +244,175 @@ const crmRouter = t.router({
     user: { ...ctx.session.user, crmRole: ctx.crmRole },
     session: { id: ctx.session.session.id, expiresAt: ctx.session.session.expiresAt },
   })),
+  account: t.router({
+    updateProfile: crmProcedure
+      .input(updateCrmProfileSchema)
+      .mutation(async ({ input, ctx }) => {
+        const db = getDb();
+        const userId = ctx.session.user.id;
+
+        try {
+          return await db.transaction(async (tx) => {
+            const [target] = await tx
+              .select({ email: user.email, emailVerified: user.emailVerified })
+              .from(user)
+              .where(eq(user.id, userId))
+              .for("update");
+
+            if (!target) {
+              throw new TRPCError({ code: "NOT_FOUND", message: "Usuário não encontrado." });
+            }
+
+            const targetEmail = target.email.trim().toLowerCase();
+            const emailChanged = targetEmail !== input.email;
+            if (emailChanged) {
+              if (!input.currentPassword) {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: "Informe sua senha atual para alterar o e-mail.",
+                });
+              }
+
+              const [credential] = await tx
+                .select({ password: authAccount.password })
+                .from(authAccount)
+                .where(
+                  and(
+                    eq(authAccount.userId, userId),
+                    eq(authAccount.providerId, "credential"),
+                  ),
+                )
+                .limit(1);
+
+              if (
+                !credential?.password ||
+                !(await verifyPassword({ hash: credential.password, password: input.currentPassword }))
+              ) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "A senha atual está incorreta." });
+              }
+            }
+
+            if (emailChanged) {
+              const [duplicate] = await tx
+                .select({ id: user.id })
+                .from(user)
+                .where(
+                  and(
+                    sql`lower(${user.email}) = ${input.email}`,
+                    ne(user.id, userId),
+                  ),
+                )
+                .limit(1);
+
+              if (duplicate) {
+                throw new TRPCError({
+                  code: "CONFLICT",
+                  message: "Já existe um usuário com este e-mail.",
+                });
+              }
+            }
+
+            const [updated] = await tx
+              .update(user)
+              .set({
+                name: input.name,
+                email: input.email,
+                emailVerified: emailChanged ? false : target.emailVerified,
+                // Persist legacy access as an explicit role when the profile is edited.
+                crmRole: ctx.crmRole,
+                updatedAt: new Date(),
+              })
+              .where(eq(user.id, userId))
+              .returning({
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                image: user.image,
+              });
+
+            if (!updated) {
+              throw new TRPCError({ code: "NOT_FOUND", message: "Usuário não encontrado." });
+            }
+
+            return { user: { ...updated, crmRole: ctx.crmRole } };
+          });
+        } catch (caught) {
+          if (caught instanceof TRPCError) throw caught;
+          if (
+            typeof caught === "object" &&
+            caught !== null &&
+            "code" in caught &&
+            caught.code === "23505"
+          ) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: "Já existe um usuário com este e-mail.",
+            });
+          }
+          throw caught;
+        }
+      }),
+    changePassword: crmProcedure
+      .input(changeCrmPasswordSchema)
+      .mutation(async ({ input, ctx }) => {
+        if (input.currentPassword === input.newPassword) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "A nova senha deve ser diferente da senha atual.",
+          });
+        }
+
+        const userId = ctx.session.user.id;
+        const db = getDb();
+        const [credential] = await db
+          .select({ id: authAccount.id, password: authAccount.password })
+          .from(authAccount)
+          .where(
+            and(
+              eq(authAccount.userId, userId),
+              eq(authAccount.providerId, "credential"),
+            ),
+          )
+          .limit(1);
+
+        if (
+          !credential?.password ||
+          !(await verifyPassword({ hash: credential.password, password: input.currentPassword }))
+        ) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "A senha atual está incorreta." });
+        }
+
+        const password = await hashPassword(input.newPassword);
+        await db.transaction(async (tx) => {
+          const [updated] = await tx
+            .update(authAccount)
+            .set({ password, updatedAt: new Date() })
+            .where(
+              and(
+                eq(authAccount.id, credential.id),
+                eq(authAccount.userId, userId),
+                eq(authAccount.providerId, "credential"),
+              ),
+            )
+            .returning({ id: authAccount.id });
+
+          if (!updated) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "Conta de acesso não encontrada." });
+          }
+
+          await tx
+            .delete(authSession)
+            .where(
+              and(
+                eq(authSession.userId, userId),
+                ne(authSession.id, ctx.session.session.id),
+              ),
+            );
+        });
+
+        return { status: true };
+      }),
+  }),
   users: t.router({
     list: adminProcedure.query(async () => {
       const records = await getDb().select(crmUserFields).from(user).orderBy(asc(user.name), asc(user.id));

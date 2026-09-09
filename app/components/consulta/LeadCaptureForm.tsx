@@ -3,6 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { apiPath } from "@/app/consulta/paths";
 import { focusRing } from "@/app/consulta/ui";
+import { apiError } from "@/app/consulta/api-error";
+import { useCooldown } from "@/app/consulta/use-cooldown";
 
 type LeadCaptureFormProps = {
   brandName: string;
@@ -25,9 +27,11 @@ export default function LeadCaptureForm({
 }: LeadCaptureFormProps) {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [error, setError] = useState("");
+  const { coolingDown, registerError } = useCooldown();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitState === "submitting" || coolingDown) return;
     setSubmitState("submitting");
     setError("");
 
@@ -57,14 +61,13 @@ export default function LeadCaptureForm({
       };
 
       if (!response.ok) {
-        throw new Error(
-          payload.error ?? "Não foi possível enviar seus dados agora.",
-        );
+        throw apiError(response, payload, "Não foi possível enviar seus dados agora.");
       }
 
       setSubmitState("success");
       form.reset();
     } catch (requestError) {
+      registerError(requestError);
       setError(
         requestError instanceof Error
           ? requestError.message
@@ -100,8 +103,8 @@ export default function LeadCaptureForm({
       aria-labelledby="lead-form-title"
     >
       <div className="grid grid-cols-[0.8fr_1.2fr] max-tablet:grid-cols-1">
-        <div className="bg-ink px-7 py-7 text-white max-compact:px-5.5">
-          <p className="m-0 text-[0.68rem] font-bold tracking-[0.14em] text-accent uppercase">
+        <div className="bg-accent-soft px-7 py-7 text-accent-dark max-compact:px-5.5">
+          <p className="m-0 text-[0.68rem] font-bold tracking-[0.14em] text-accent-dark uppercase">
             Próximo passo
           </p>
           <h2
@@ -110,11 +113,11 @@ export default function LeadCaptureForm({
           >
             Receba uma análise personalizada.
           </h2>
-          <p className="mb-0 mt-3 text-[0.82rem] leading-[1.65] text-ink-on-dark">
+          <p className="mb-0 mt-3 text-[0.82rem] leading-[1.65] text-ink-soft">
             Conte o que a marca representa. Isso ajuda a identificar as classes
             e os processos que merecem maior atenção.
           </p>
-          <div className="mt-6 border-t border-white/15 pt-5 text-[0.74rem] leading-[1.55] text-ink-on-dark">
+          <div className="mt-6 border-t border-line pt-5 text-[0.74rem] leading-[1.55] text-ink-soft">
             Seus dados serão usados para atender esta solicitação. O recebimento
             de novidades é opcional.
           </div>
@@ -235,9 +238,9 @@ export default function LeadCaptureForm({
           )}
 
           <button
-            className={`mt-5 flex min-h-12 w-full cursor-pointer items-center justify-center rounded-lg border-0 bg-cta px-5 text-[0.8rem] font-bold text-white shadow-cta transition-[background,box-shadow,transform] hover:-translate-y-px hover:bg-cta-dark hover:shadow-none disabled:cursor-wait disabled:opacity-70 ${focusRing}`}
+            className={`mt-5 flex min-h-12 w-full cursor-pointer items-center justify-center rounded-lg border-0 bg-ink px-5 text-[0.8rem] font-bold text-white shadow-cta transition-[background,box-shadow,transform] hover:-translate-y-px hover:bg-ink-soft hover:shadow-none disabled:cursor-wait disabled:opacity-70 ${focusRing}`}
             type="submit"
-            disabled={submitState === "submitting"}
+            disabled={submitState === "submitting" || coolingDown}
           >
             {submitState === "submitting"
               ? "Enviando dados..."

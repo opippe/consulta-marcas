@@ -41,6 +41,8 @@ export const leadInputSchema = z.object({
 });
 
 export const searchInputSchema = leadInputSchema.omit({ searchToken: true }).extend({
+  // Checked separately to give missing/expired challenges a consistent error code.
+  turnstileToken: z.unknown().optional(),
   marca: z.string().trim().min(2).max(120),
   attribution: attributionSchema,
   registrationRequested: z.boolean().default(false),

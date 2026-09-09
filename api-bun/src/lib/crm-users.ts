@@ -12,6 +12,17 @@ export const createCrmUserSchema = z.object({
   password: z.string().min(10, "A senha deve ter pelo menos 10 caracteres.").max(128, "A senha deve ter no máximo 128 caracteres."),
 }).strict();
 
+export const updateCrmProfileSchema = z.object({
+  name: z.string().trim().min(2, "Informe o nome completo.").max(120),
+  email: z.string().trim().toLowerCase().email("Informe um e-mail válido.").max(254),
+  currentPassword: z.string().min(1).max(128).optional(),
+}).strict();
+
+export const changeCrmPasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Informe sua senha atual.").max(128),
+  newPassword: z.string().min(10, "A nova senha deve ter pelo menos 10 caracteres.").max(128, "A nova senha deve ter no máximo 128 caracteres."),
+}).strict();
+
 export function resolveCrmRole(record: Pick<typeof user.$inferSelect, "email" | "crmRole">) {
   if (record.crmRole) return record.crmRole;
   const email = record.email.trim().toLowerCase();

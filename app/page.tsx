@@ -1,64 +1,32 @@
 "use client";
 
-import type { FormEvent, ReactNode } from "react";
-import { ArrowUpRight, FileCheck2, Radar, SearchCheck } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ArrowRight, ArrowUpRight, ArrowDown, Check, Search, ShieldCheck, Radar, Plus, Pause, Play, LockKeyhole, LoaderCircle } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import ContactFields, { contactFormData } from "@/app/components/consulta/ContactFields";
 import ConsultaFooter from "@/app/components/consulta/ConsultaFooter";
 import ConsultaHeader from "@/app/components/consulta/ConsultaHeader";
-
 import { useConsulta } from "@/app/consulta/consulta-context";
 import { apiPath, publicAsset, sitePath } from "@/app/consulta/paths";
 import type { ConsultaApiResponse } from "@/app/consulta/types";
-import { eyebrow, focusRing, note } from "@/app/consulta/ui";
+import "./landing.css";
+import TurnstileChallenge from "@/app/components/consulta/TurnstileChallenge";
+import { apiError } from "@/app/consulta/api-error";
+import { useCooldown } from "@/app/consulta/use-cooldown";
 
-const officialLogos = [
-  {
-    src: publicAsset("/inpi-logo.png"),
-    alt: "Instituto Nacional da Propriedade Industrial",
-    width: 780,
-    height: 166,
-  },
-  {
-    src: publicAsset("/gov-logo.svg"),
-    alt: "gov.br",
-    width: 495,
-    height: 178,
-  },
-] as const;
-
-const carouselLogos = [...officialLogos, ...officialLogos, ...officialLogos];
-
-function CheckItem({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex items-center gap-2.5 text-[0.76rem] font-semibold text-ink-soft">
-      <span
-        className="grid size-5 shrink-0 place-items-center rounded-md border border-accent-soft bg-accent-soft text-[0.65rem] font-bold text-accent-dark"
-        aria-hidden="true"
-      >
-        ✓
-      </span>
-      {children}
-    </div>
-  );
-}
-
-function ServiceIcon({ children, inverted = false }: { children: ReactNode; inverted?: boolean }) {
-  return (
-    <span
-      className={
-        inverted
-          ? "grid size-11 place-items-center rounded-lg bg-accent text-ink"
-          : "grid size-11 place-items-center rounded-lg border border-accent-soft bg-accent-soft text-accent-dark"
-      }
-      aria-hidden="true"
-    >
-      {children}
-    </span>
-  );
-}
+const faqs = [
+  ["O diagnóstico é realmente gratuito?", "Sim. A pesquisa preliminar é gratuita. Você informa a marca e seus dados de contato para consultar processos relacionados e entender os próximos passos."],
+  ["A consulta garante o registro da minha marca?", "Não. O diagnóstico é um ponto de partida. A análise completa considera a atividade, as classes e as semelhanças entre marcas. O resultado da pesquisa não é uma garantia de registro."],
+  ["Por que pesquisar antes de registrar?", "A pesquisa ajuda a identificar processos semelhantes e pontos de atenção antes de investir em um pedido de registro."],
+  ["O que acontece depois do diagnóstico?", "Você recebe os resultados da pesquisa e pode solicitar uma análise personalizada para avaliar o próximo passo da sua marca."],
+  ["Como funciona o monitoramento?", "Esse serviço está sendo planejado para acompanhar novos pedidos semelhantes depois do registro da marca. Por enquanto, comece pelo diagnóstico e pela orientação para o registro."],
+];
+const services = [
+  { number: "01", Icon: Search, title: "Primeiro, clareza.", label: "Diagnóstico de marca", text: "Entenda o cenário da sua marca. Identifique processos semelhantes e os pontos que merecem atenção antes de avançar.", action: "Fazer diagnóstico gratuito" },
+  { number: "02", Icon: ShieldCheck, title: "Depois, proteção.", label: "Registro de marca", text: "Dê o próximo passo com orientação. Uma análise personalizada ajuda a definir o caminho para o pedido de registro.", action: "Quero registrar minha marca" },
+  { number: "03", Icon: Radar, title: "Sempre, cuidado.", label: "Gestáo e monitoramento", text: "A proteção continua depois do registro. Estamos preparando o acompanhamento de novos pedidos semelhantes à sua marca.", action: "Em breve" },
+];
 
 export default function Home() {
   const router = useRouter();
@@ -66,11 +34,50 @@ export default function Home() {
   const [marca, setMarca] = useState("");
   const [registrationRequested, setRegistrationRequested] = useState(false);
   const [error, setError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [challengeVersion, setChallengeVersion] = useState(0);
+  const { coolingDown, registerError } = useCooldown();
   const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState(1);
+  const [paused, setPaused] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (step === 2) formRef.current?.querySelector<HTMLInputElement>('input[name="name"]')?.focus({ preventScroll: true });
+  }, [step]);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll("[data-reveal]").forEach(element => {
+      if (element.getBoundingClientRect().top > window.innerHeight) {
+        element.classList.add("will-reveal");
+        observer.observe(element);
+      }
+    });
+    return () => observer.disconnect();
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isLoading || coolingDown) return;
 
+    if (step === 1) {
+      if (marca.trim().length < 2) {
+        setError("Informe pelo menos 2 caracteres para iniciar a consulta.");
+        return;
+      }
+      setError("");
+      setStep(2);
+      return;
+    }
     const contact = contactFormData(new FormData(event.currentTarget));
     const nomeMarca = marca.trim();
     if (nomeMarca.length < 2) {
@@ -78,6 +85,7 @@ export default function Home() {
       return;
     }
 
+    if (!turnstileToken) { setError("Conclua a verificação de segurança para consultar."); return; }
     setIsLoading(true);
     setError("");
 
@@ -88,6 +96,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           marca: nomeMarca,
+          turnstileToken,
           ...contact,
           registrationRequested: registrationRequested || queryParams.get("interesse") === "registro",
           attribution: {
@@ -109,9 +118,7 @@ export default function Home() {
       };
 
       if (!response.ok) {
-        throw new Error(
-          payload.error ?? "Não foi possível concluir a consulta agora.",
-        );
+        throw apiError(response, payload, "Não foi possível concluir a consulta agora.");
       }
 
       setConsulta({
@@ -130,404 +137,97 @@ export default function Home() {
       }
       router.push(sitePath(`/resultados?${resultParams.toString()}`));
     } catch (requestError) {
+      registerError(requestError);
       setError(
         requestError instanceof Error
           ? requestError.message
           : "Não foi possível concluir a consulta agora.",
       );
     } finally {
+      setTurnstileToken("");
+      setChallengeVersion(value => value + 1);
       setIsLoading(false);
     }
   }
 
   return (
-    <main id="top" className="min-h-screen bg-background">
-      <ConsultaHeader />
-
-      <div className="mx-auto w-shell max-w-295">
-        <section
-          className="relative isolate grid grid-cols-hero items-center gap-hero overflow-hidden bg-background pb-24 pt-12 max-tablet:grid-cols-1 max-tablet:gap-12 max-compact:pb-16 max-compact:pt-12"
-          aria-labelledby="page-title"
-        >
-          <div
-            className="pointer-events-none absolute -inset-[8%] z-0 -rotate-4 bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage:
-                `linear-gradient(rgba(246, 242, 234, 0.95), rgba(246, 242, 234, 0.96)), url('${publicAsset("/section-bg.png")}')`,
-            }}
-            aria-hidden="true"
-          />
-
-          <div className="relative z-10 max-w-145">
-            <div className="mb-6 flex flex-wrap items-center gap-2.5 text-[0.68rem] font-bold tracking-[0.12em] uppercase">
-              <span className="inline-flex items-center gap-2 rounded-lg border border-accent-soft bg-accent-soft px-3 py-2 text-accent-dark">
-                <span className="size-1.75 rounded-full bg-accent" aria-hidden="true" />
-                55 Marcas
-              </span>
-              <span className="text-muted">Registro de marcas online</span>
-            </div>
-            <h1
-              id="page-title"
-              className="m-0 max-w-145 font-display text-[clamp(2.85rem,6vw,5.75rem)] font-semibold leading-[0.98] tracking-[-0.06em] text-ink"
-            >
-              Proteja a marca <span className="text-accent-dark">que você criou.</span>
-            </h1>
-            <p className="mt-7 max-w-125 text-[1.06rem] leading-[1.7] text-ink-soft">
-              Pesquise, registre e acompanhe sua marca em uma jornada digital,
-              clara e descomplicada.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <a
-                className={`inline-flex min-h-13 items-center justify-center gap-2 rounded-lg bg-cta px-5 text-[0.82rem] font-bold text-white no-underline shadow-cta transition-[background,box-shadow,transform,color] duration-160 ease-out hover:-translate-y-px hover:bg-cta-dark hover:text-white hover:shadow-none ${focusRing}`}
-                href="#diagnostico"
-                onClick={() => setRegistrationRequested(true)}
-              >
-                Quero registrar minha marca
-                <ArrowUpRight aria-hidden="true" size={16} strokeWidth={2.2} />
-              </a>
-              <a
-                className={`inline-flex min-h-13 items-center gap-2 rounded-lg border border-line bg-surface px-4 text-[0.82rem] font-bold text-ink-soft no-underline transition-[border-color,color] hover:border-accent-dark hover:text-accent-dark ${focusRing}`}
-                href="#como-funciona"
-              >
-                Como funciona
-                <span aria-hidden="true">↓</span>
-              </a>
-            </div>
-            <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3" aria-label="Diferenciais">
-              <CheckItem>Clareza em cada etapa</CheckItem>
-              <CheckItem>Processo digital</CheckItem>
-            </div>
+    <div className="landing" id="top">
+      <a className="skip-link" href="#diagnostico">Ir para o diagnóstico gratuito</a>
+      <ConsultaHeader registrationHref="#diagnostico" />
+      <main>
+        <section className="hero shell" aria-labelledby="page-title">
+          <div className="hero-texture" style={{ backgroundImage: `linear-gradient(rgba(255,255,255,.94), rgba(255,255,255,.96)), url('${publicAsset("/section-bg.png")}')` }} aria-hidden="true" />
+          <div className="hero-copy">
+            <p className="kicker"><span className="brand-dot" /> Você cria. A gente protege.</p>
+            <h1 id="page-title">Sua marca.<br />Seu futuro.<br /><span>Proteja os dois<span className="period">.</span></span></h1>
+            <p className="hero-description">Toda marca carrega uma história. A gente ajuda a cuidar da sua, da primeira pesquisa ao pedido de registro.</p>
+            <a className="text-link" href="#diagnostico">Comece com um diagnóstico gratuito <ArrowUpRight size={19} aria-hidden="true" /></a>
+            <div className="hero-footnote"><span className="small-rule" /> Mais clareza para o seu próximo passo.</div>
           </div>
-
-          <section
-            id="diagnostico"
-            className="relative z-10 overflow-hidden rounded-panel border border-line bg-surface p-card shadow-site max-tablet:max-w-155 max-compact:px-5 max-compact:pb-5.5 max-compact:pt-6.25"
-            aria-labelledby="diagnostic-title"
-          >
-            <div className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full border-[1rem] border-accent-soft opacity-90" aria-hidden="true" />
-            <div className="relative">
-              <div className="mb-5 flex items-center justify-between gap-4">
-                <p className="m-0 text-[0.68rem] font-bold tracking-[0.14em] text-accent-dark uppercase">
-                  Diagnóstico gratuito
-                </p>
-                <span className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface-soft px-2.5 py-1.5 text-[0.64rem] font-bold tracking-[0.08em] text-ink-soft uppercase">
-                  <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
-                  Etapa 01
-                </span>
-              </div>
-              <h2
-                id="diagnostic-title"
-                className="m-0 max-w-95 font-display text-[clamp(1.8rem,3.5vw,2.55rem)] font-semibold leading-[1.05] tracking-[-0.045em] text-ink"
-              >
-                Sua marca está realmente disponível para registro?
-              </h2>
-              <p className="mb-7 mt-4 max-w-105 text-[0.9rem] leading-[1.65] text-muted">
-                Faça uma pesquisa preliminar nos processos públicos de marcas e
-                descubra os próximos passos.
-              </p>
-
-              <form onSubmit={handleSubmit}>
-                <label
-                  className="mb-2.25 block text-[0.76rem] font-bold text-ink"
-                  htmlFor="marca"
-                >
-                  Nome da marca
-                </label>
-                <input
-                  className="min-h-14 w-full rounded-lg border border-line-strong bg-surface-soft px-4 text-[0.96rem] text-ink outline-none transition-[border-color,box-shadow,background] duration-160 ease-out placeholder:text-muted focus:border-accent-dark focus:bg-surface focus:shadow-input-focus"
-                  id="marca"
-                  name="marca"
-                  type="text"
-                  value={marca}
-                  onChange={(event) => setMarca(event.target.value)}
-                  placeholder="Ex.: Horizonte"
-                  autoComplete="off"
-                  maxLength={120}
-                  required
-                />
-                <div className="mt-5"><ContactFields /></div>
-                {registrationRequested && <p className="text-sm text-accent-dark" role="status">Seu interesse em registrar a marca será enviado junto com a consulta.</p>}
-                <button
-                  className={`mt-3 flex min-h-14 w-full cursor-pointer items-center justify-between rounded-lg border-0 bg-[#E56B4D] px-4.25 pl-4.75 text-[0.84rem] font-bold text-white shadow-danger transition-[background,box-shadow,transform,color] duration-160 ease-out [&:not(:disabled):hover]:-translate-y-px [&:not(:disabled):hover]:bg-[#E56B4D] [&:not(:disabled):hover]:text-white [&:not(:disabled):hover]:shadow-none disabled:cursor-wait disabled:opacity-70 ${focusRing}`}
-                  type="submit"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Consultando..." : "Consultar disponibilidade"}
-                  <span className="text-[1.2rem] font-normal leading-none" aria-hidden="true">
-                    ✓
-                  </span>
-                </button>
-              </form>
-
-              <div className="mt-5 border-t border-line pt-4.5">
-                <div className="flex flex-wrap gap-x-5">
-                  <span className={note}>Consulta gratuita</span>
-                  <span className={note}>Pesquisa preliminar</span>
-                </div>
-              </div>
-
-              <div className="mt-4 min-h-8" aria-live="polite">
-                {isLoading && (
-                  <div className="flex items-center gap-3 text-[0.78rem] text-ink-soft" role="status">
-                    <span
-                      className="size-4 animate-[spin_800ms_linear_infinite] rounded-full border-2 border-line-strong border-t-accent"
-                      aria-hidden="true"
-                    />
-                    Consultando os registros de “{marca.trim()}”...
-                  </div>
-                )}
-
-                {error && (
-                  <div
-                    className="flex items-start gap-3 rounded-alert border border-danger-soft bg-danger-soft px-4 py-3.5 text-ink"
-                    role="alert"
-                  >
-                    <span
-                      className="grid size-5.5 shrink-0 place-items-center rounded-full bg-danger text-[0.7rem] font-bold text-white"
-                      aria-hidden="true"
-                    >
-                      !
-                    </span>
-                    <p className="m-0 text-[0.78rem] leading-[1.45] text-ink-soft">{error}</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="">
-                <div
-                  className="relative -mx-1 overflow-hidden"
-                  aria-label="Fontes oficiais consultadas"
-                >
-                  <div
-                    className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-linear-to-r from-surface to-transparent"
-                    aria-hidden="true"
-                  />
-                  <div
-                    className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-linear-to-l from-surface to-transparent"
-                    aria-hidden="true"
-                  />
-                  <div className="flex w-max animate-[logo-marquee_28s_linear_infinite] motion-reduce:animate-none">
-                    {[0, 1].map((groupIndex) => (
-                      <div
-                        className="flex shrink-0 items-center gap-8 pr-8"
-                        aria-hidden={groupIndex === 1}
-                        key={groupIndex}
-                      >
-                        {carouselLogos.map((logo, logoIndex) => (
-                          <Image
-                            className="h-7 w-auto shrink-0 object-contain opacity-80 transition-opacity duration-200 hover:opacity-100"
-                            key={`${groupIndex}-${logoIndex}-${logo.src}`}
-                            src={logo.src}
-                            alt={groupIndex === 0 && logoIndex < officialLogos.length ? logo.alt : ""}
-                            width={logo.width}
-                            height={logo.height}
-                            unoptimized
-                          />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          <section className="diagnostic-card" id="diagnostico" aria-labelledby="diagnostic-title">
+            <div className="card-eyebrow"><span><span className="brand-dot" /> Diagnóstico gratuito</span><span>0{step} / 02</span></div>
+            <div className="step-track" aria-hidden="true"><span /><span className={step === 2 ? "active" : ""} /></div>
+            <h2 id="diagnostic-title">{step === 1 ? "Vamos começar pelo nome." : "Agora, um pouco sobre você."}</h2>
+            <p className="card-description">{step === 1 ? "Pesquise sua marca e descubra se existem processos semelhantes." : "Informe seus dados para consultar os resultados e receber orientação."}</p>
+            <form ref={formRef} onSubmit={handleSubmit} aria-busy={isLoading}>
+              <label className="brand-label" htmlFor="marca">Nome da marca</label>
+              <input className="brand-input" id="marca" name="marca" value={marca} onChange={event => { setMarca(event.target.value); setError(""); }} placeholder="Qual nome você quer proteger?" required minLength={2} maxLength={120} autoComplete="off" aria-describedby={error ? "diagnostic-error" : undefined} aria-invalid={error && marca.trim().length < 2 ? true : undefined} />
+              <fieldset className="contact-step" hidden={step !== 2} disabled={step !== 2 || isLoading}><legend className="sr-only">Seus dados de contato</legend><ContactFields compact /></fieldset>
+              {registrationRequested && <p className="form-note" role="status">Seu interesse em registrar será enviado junto com a consulta.</p>}
+              {step === 2 && !isLoading && <TurnstileChallenge key={challengeVersion} onToken={setTurnstileToken} />}
+              {error && <p className="form-error" id="diagnostic-error" role="alert">{error}</p>}
+              <button className={`button button-orange${isLoading ? " is-loading" : ""}`} type="submit" disabled={isLoading || coolingDown || (step === 2 && !turnstileToken)}>
+                {isLoading ? <><LoaderCircle className="loading-spinner" size={18} aria-hidden="true" /><span>Consultando sua marca…</span></> : <><span>{step === 1 ? "Começar diagnóstico" : "Consultar disponibilidade"}</span><ArrowRight size={20} aria-hidden="true" /></>}
+              </button>
+              {step === 2 && <button className="back-button" type="button" disabled={isLoading} onClick={() => { setStep(1); setError(""); requestAnimationFrame(() => document.getElementById("marca")?.focus()); }}>Voltar à primeira etapa</button>}
+              <p className="form-note" role="status">{isLoading ? "Buscando processos relacionados. Aguarde um momento." : <><LockKeyhole size={13} aria-hidden="true" /> Gratuito. Sem compromisso de contratação.</>}</p>
+            </form>
+            <div className="official-sources">
+              <div className="source-heading"><span>Pesquisa em dados públicos</span><button type="button" onClick={() => setPaused(!paused)} aria-label={paused ? "Reproduzir carrossel de fontes" : "Pausar carrossel de fontes"}>{paused ? <Play size={13} /> : <Pause size={13} />}</button></div>
+              <div className="logo-window"><div className={`logo-track ${paused ? "paused" : ""}`}>
+                {[0, 1].map(group => <div className="logo-group" key={group} aria-hidden={group === 1}>
+                  {[0, 1].map(copy => <div className="logo-pair" key={copy}>
+                    <Image src={publicAsset("/inpi-logo.png")} alt={group === 0 && copy === 0 ? "Instituto Nacional da Propriedade Industrial" : ""} width={780} height={166} unoptimized />
+                    <Image src={publicAsset("/gov-logo.svg")} alt={group === 0 && copy === 0 ? "gov.br" : ""} width={495} height={178} unoptimized />
+                  </div>)}
+                </div>)}
+              </div></div>
+              <p>Consulta independente, sem vínculo com os órgãos.</p>
             </div>
           </section>
+          <div className="hero-bottom"><span>O primeiro passo é conhecer o caminho.</span><a href="#servicos" aria-label="Conhecer os serviços"><ArrowDown size={19} aria-hidden="true" /></a></div>
         </section>
 
-        <section className="grid grid-cols-3 border-y border-line py-7 max-tablet:grid-cols-1 max-tablet:gap-5 max-compact:py-5" aria-label="A jornada da 55 Marcas">
-          <div className="flex items-center gap-3 border-r border-line px-6 first:pl-0 max-tablet:border-r-0 max-tablet:border-b max-tablet:pb-5 max-compact:px-0">
-            <span className="font-display text-[1.45rem] font-semibold tracking-[-0.08em] text-accent-dark">01</span>
-            <div>
-              <strong className="block text-[0.78rem] text-ink">Diagnóstico</strong>
-              <span className="text-[0.72rem] text-muted">Comece pela pesquisa</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 border-r border-line px-6 max-tablet:border-r-0 max-tablet:border-b max-tablet:pb-5 max-compact:px-0">
-            <span className="font-display text-[1.45rem] font-semibold tracking-[-0.08em] text-accent-dark">02</span>
-            <div>
-              <strong className="block text-[0.78rem] text-ink">Registro</strong>
-              <span className="text-[0.72rem] text-muted">Proteja o que é seu</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 px-6 last:pr-0 max-compact:px-0">
-            <span className="font-display text-[1.45rem] font-semibold tracking-[-0.08em] text-accent-dark">03</span>
-            <div>
-              <strong className="block text-[0.78rem] text-ink">Monitoramento</strong>
-              <span className="text-[0.72rem] text-muted">Continue acompanhado</span>
-            </div>
+        <section className="services shell section-space" id="servicos" aria-labelledby="services-title" data-reveal>
+          <div className="section-heading"><p className="kicker">01 — O que fazemos</p><div><h2 id="services-title">Uma marca forte começa<br />com uma escolha segura<span className="period">.</span></h2><p>Da pesquisa à proteção, cada etapa tem um propósito.</p></div></div>
+          <div className="service-grid">{services.map(({ number, Icon, title, label, text, action }, index) => <article className={`service ${index === 1 ? "service-featured" : ""}`} key={number}>
+            <div className="service-top"><span>{number}</span><Icon size={26} strokeWidth={1.5} aria-hidden="true" /></div>
+            <p className="service-label">{label}</p><h3>{title}</h3><p className="service-description">{text}</p>
+            {index < 2 ? <a href="#diagnostico" className="text-link" onClick={() => { if (index === 1) setRegistrationRequested(true); }}>{action}<ArrowUpRight size={18} aria-hidden="true" /></a> : <span className="coming-soon"><span className="brand-dot" />{action}</span>}
+          </article>)}</div>
+        </section>
+
+        <section className="process" id="como-funciona" aria-labelledby="process-title">
+          <div className="shell section-space" data-reveal>
+            <div className="process-heading"><div><p className="kicker">02 — Como funciona</p><h2 id="process-title">Menos incerteza.<br />Mais direção<span className="period">.</span></h2></div><p>Você não precisa entender tudo sobre marcas.<br />Precisa entender o próximo passo.</p></div>
+            <ol className="process-grid">{[["Pesquise.", "Informe o nome da marca e comece pela consulta preliminar."], ["Entenda.", "Veja processos relacionados e identifique pontos de atenção."], ["Decida.", "Solicite uma análise personalizada para orientar seu registro."]].map(([title, description], index) => <li key={title}><span className="process-number">0{index + 1}<span className="period">.</span></span><h3>{title}</h3><p>{description}</p></li>)}</ol>
+            <a className="text-link" href="#diagnostico">Dar o primeiro passo <ArrowUpRight size={18} aria-hidden="true" /></a>
           </div>
         </section>
 
-        <section id="servicos" className="py-24 max-compact:py-18" aria-labelledby="services-title">
-          <div className="max-w-145">
-            <p className={eyebrow}>Uma jornada completa</p>
-            <h2 id="services-title" className="m-0 font-display text-[clamp(2rem,4vw,3.6rem)] font-semibold leading-[1.02] tracking-[-0.05em] text-ink">
-              Da primeira busca à proteção contínua.
-            </h2>
-            <p className="mb-0 mt-5 max-w-125 text-[0.98rem] leading-[1.7] text-muted">
-              Cada etapa tem um objetivo claro para você tomar decisões com mais
-              segurança e menos complicação.
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-3 gap-5 max-tablet:grid-cols-1">
-            <article className="rounded-panel border border-line bg-surface p-7 shadow-results max-compact:p-5.5">
-              <ServiceIcon>
-                <SearchCheck size={22} strokeWidth={1.8} />
-              </ServiceIcon>
-              <h3 className="mt-5 font-display text-[1.45rem] font-semibold tracking-[-0.035em] text-ink">Diagnóstico de Marca</h3>
-              <p className="mb-0 mt-3 text-[0.86rem] leading-[1.65] text-muted">
-                Uma pesquisa inicial para entender se já existem processos
-                semelhantes à sua marca.
-              </p>
-              <a className={`mt-7 inline-flex text-[0.78rem] font-bold text-accent-dark no-underline hover:underline hover:underline-offset-3 ${focusRing}`} href="#diagnostico">
-                Fazer diagnóstico <span className="ml-1" aria-hidden="true">→</span>
-              </a>
-            </article>
-
-            <article className="rounded-panel bg-ink p-7 text-white shadow-site max-compact:p-5.5">
-              <ServiceIcon inverted>
-                <FileCheck2 size={22} strokeWidth={1.8} />
-              </ServiceIcon>
-              <h3 className="mt-5 font-display text-[1.45rem] font-semibold tracking-[-0.035em]">Registro de Marca</h3>
-              <p className="mb-0 mt-3 text-[0.86rem] leading-[1.65] text-ink-on-dark">
-                Transforme a pesquisa em um processo acompanhado para proteger
-                o nome que faz seu negócio ser único.
-              </p>
-              <a className={`mt-7 inline-flex text-[0.78rem] font-bold text-accent no-underline hover:text-white hover:underline hover:underline-offset-3 ${focusRing}`} href="#diagnostico"
-                onClick={() => setRegistrationRequested(true)}>
-                Quero registrar minha marca <ArrowUpRight className="ml-1" aria-hidden="true" size={15} strokeWidth={2.2} />
-              </a>
-            </article>
-
-            <article className="rounded-panel border border-line bg-surface p-7 shadow-results max-compact:p-5.5">
-              <ServiceIcon>
-                <Radar size={22} strokeWidth={1.8} />
-              </ServiceIcon>
-              <h3 className="mt-5 font-display text-[1.45rem] font-semibold tracking-[-0.035em] text-ink">Gestão e Monitoramento</h3>
-              <p className="mb-0 mt-3 text-[0.86rem] leading-[1.65] text-muted">
-                Continue acompanhando possíveis pedidos semelhantes depois que
-                sua marca estiver registrada.
-              </p>
-              <span className="mt-7 inline-flex items-center gap-2 text-[0.75rem] font-bold text-muted">
-                <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
-                Próxima etapa da sua proteção
-              </span>
-            </article>
-          </div>
+        <section className="faq shell section-space" id="faq" aria-labelledby="faq-title" data-reveal>
+          <div><p className="kicker">03 — Sem dúvidas</p><h2 id="faq-title">Clareza, desde<br />o começo<span className="period">.</span></h2><p>O que você precisa saber<br />antes de dar o próximo passo.</p></div>
+          <div className="faq-list">{faqs.map(([question, answer]) => <details key={question}><summary>{question}<Plus size={20} aria-hidden="true" /></summary><p>{answer}</p></details>)}</div>
         </section>
 
-        <section id="como-funciona" className="rounded-panel bg-ink px-10 py-14 text-white max-tablet:px-7 max-compact:px-5.5 max-compact:py-10" aria-labelledby="process-title">
-          <div className="flex items-end justify-between gap-8 max-tablet:block">
-            <div className="max-w-125">
-              <p className="mb-4 text-[0.68rem] font-bold tracking-[0.15em] text-accent uppercase">Como funciona</p>
-              <h2 id="process-title" className="m-0 font-display text-[clamp(2rem,4vw,3.45rem)] font-semibold leading-[1.02] tracking-[-0.05em]">
-                Clareza em cada etapa do processo.
-              </h2>
-            </div>
-            <p className="mb-1 max-w-80 text-[0.86rem] leading-[1.65] text-ink-on-dark max-tablet:mt-5">
-              Você acompanha o que está acontecendo e entende qual é o próximo
-              passo.
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-4 gap-5 max-tablet:grid-cols-2 max-compact:grid-cols-1">
-            {[
-              ["01", "Pesquise", "Comece com uma consulta preliminar da sua marca."],
-              ["02", "Entenda", "Veja processos relacionados e pontos de atenção."],
-              ["03", "Registre", "Escolha o melhor caminho para iniciar a proteção."],
-              ["04", "Acompanhe", "Continue perto da sua marca em cada momento."],
-            ].map(([number, title, description]) => (
-              <div className="border-t border-white/20 pt-5" key={number}>
-                <span className="font-display text-[0.95rem] font-semibold tracking-[0.12em] text-accent">{number}</span>
-                <h3 className="mb-0 mt-4 text-[1.05rem] font-bold">{title}</h3>
-                <p className="mb-0 mt-2 text-[0.78rem] leading-[1.6] text-ink-on-dark">{description}</p>
-              </div>
-            ))}
-          </div>
+        <section className="final-cta shell" aria-labelledby="final-title" data-reveal>
+          <div className="signature-pattern" style={{ backgroundImage: `url('${publicAsset("/55-marcas-brand-kit/brand/signature-pattern.svg")}')` }} aria-hidden="true" />
+          <p className="kicker">Seu próximo capítulo começa aqui</p><h2 id="final-title">Você cuida do negócio.<br />A gente cuida da marca.</h2>
+          <a href="#diagnostico" className="button button-black">Fazer diagnóstico gratuito <ArrowUpRight size={20} aria-hidden="true" /></a>
+          <span className="final-note"><Check size={15} aria-hidden="true" /> Um primeiro passo simples, gratuito e sem compromisso.</span>
         </section>
-
-        <section id="faq" className="grid grid-cols-[0.78fr_1.22fr] gap-18 py-24 max-tablet:grid-cols-1 max-tablet:gap-10 max-compact:py-18" aria-labelledby="faq-title">
-          <div>
-            <p className={eyebrow}>Perguntas frequentes</p>
-            <h2 id="faq-title" className="m-0 max-w-105 font-display text-[clamp(2rem,4vw,3.3rem)] font-semibold leading-[1.02] tracking-[-0.05em] text-ink">
-              Antes de proteger, é normal ter dúvidas.
-            </h2>
-            <p className="mb-0 mt-5 max-w-95 text-[0.9rem] leading-[1.65] text-muted">
-              Reunimos as respostas mais importantes para você começar com
-              tranquilidade.
-            </p>
-          </div>
-          <div className="divide-y divide-line border-y border-line">
-            <details className="group py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 text-[0.95rem] font-bold text-ink [&::-webkit-details-marker]:hidden">
-                A consulta garante que minha marca será registrada?
-                <span className="text-[1.35rem] font-normal text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
-              </summary>
-              <p className="mb-0 mt-3 max-w-150 text-[0.84rem] leading-[1.65] text-muted">
-                Não. A consulta é um diagnóstico preliminar. A análise completa
-                considera classes, similaridades e outros fatores do processo.
-              </p>
-            </details>
-            <details className="group py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 text-[0.95rem] font-bold text-ink [&::-webkit-details-marker]:hidden">
-                Por que devo pesquisar antes de registrar?
-                <span className="text-[1.35rem] font-normal text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
-              </summary>
-              <p className="mb-0 mt-3 max-w-150 text-[0.84rem] leading-[1.65] text-muted">
-                A pesquisa ajuda a identificar processos semelhantes e a tomar
-                uma decisão mais informada antes de investir no pedido.
-              </p>
-            </details>
-            <details className="group py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 text-[0.95rem] font-bold text-ink [&::-webkit-details-marker]:hidden">
-                O registro serve para qualquer tipo de negócio?
-                <span className="text-[1.35rem] font-normal text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
-              </summary>
-              <p className="mb-0 mt-3 max-w-150 text-[0.84rem] leading-[1.65] text-muted">
-                A estratégia depende da atividade, da marca e das classes que
-                representam o negócio. O diagnóstico é o ponto de partida.
-              </p>
-            </details>
-            <details className="group py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 text-[0.95rem] font-bold text-ink [&::-webkit-details-marker]:hidden">
-                Como funciona o monitoramento?
-                <span className="text-[1.35rem] font-normal text-accent transition-transform group-open:rotate-45" aria-hidden="true">＋</span>
-              </summary>
-              <p className="mb-0 mt-3 max-w-150 text-[0.84rem] leading-[1.65] text-muted">
-                Esse serviço está sendo planejado para acompanhar novos pedidos
-                semelhantes depois do registro da marca.
-              </p>
-            </details>
-          </div>
-        </section>
-
-        <section className="mb-24 overflow-hidden rounded-panel bg-cta-soft px-10 py-12 max-tablet:px-7 max-compact:mb-18 max-compact:px-5.5" aria-labelledby="final-cta-title">
-          <div className="flex items-center justify-between gap-8 max-tablet:block">
-            <div className="max-w-130">
-              <p className="mb-4 text-[0.68rem] font-bold tracking-[0.15em] text-ink uppercase">Próximo passo</p>
-              <h2 id="final-cta-title" className="m-0 font-display text-[clamp(2rem,4vw,3.35rem)] font-semibold leading-[1.02] tracking-[-0.05em] text-ink">
-                Sua ideia merece um lugar seguro.
-              </h2>
-              <p className="mb-0 mt-4 max-w-115 text-[0.9rem] leading-[1.65] text-ink-soft">
-                Comece entendendo o cenário da sua marca e avance com mais
-                clareza.
-              </p>
-            </div>
-            <div className="mt-7 shrink-0">
-              <a
-                className={`inline-flex min-h-13 items-center justify-center gap-2 rounded-lg bg-cta px-5 text-[0.82rem] font-bold text-white no-underline shadow-cta transition-[background,box-shadow,transform,color] duration-160 ease-out hover:-translate-y-px hover:bg-cta-dark hover:text-white hover:shadow-none ${focusRing}`}
-                href="#diagnostico"
-                onClick={() => setRegistrationRequested(true)}
-              >
-                Começar meu registro
-                <ArrowUpRight aria-hidden="true" size={16} strokeWidth={2.2} />
-              </a>
-            </div>
-          </div>
-        </section>
-      </div>
-
+      </main>
       <ConsultaFooter />
-    </main>
+    </div>
   );
 }

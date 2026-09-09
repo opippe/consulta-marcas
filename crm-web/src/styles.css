@@ -1,10 +1,21 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Raleway:wght@600;700&display=swap");
 @import "tailwindcss";
+@import "../../shared/brand-theme.css";
+
+
+@font-face { font-family: "Poppins"; src: url("../../public/55-marcas-brand-kit/brand/fonts/Poppins-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/55-marcas-brand-kit/brand/fonts/Poppins-Medium.ttf") format("truetype"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/55-marcas-brand-kit/brand/fonts/Poppins-SemiBold.ttf") format("truetype"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../../public/55-marcas-brand-kit/brand/fonts/Poppins-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
+
+@theme inline {
+  --font-sans: "Poppins", "Segoe UI", sans-serif;
+  --font-display: "Poppins", "Segoe UI", sans-serif;
+}
 
 :root {
-  color: #173f35;
-  background: #f6f2ea;
-  font-family: "DM Sans", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: var(--surface-soft);
+  font-family: "Poppins", "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -16,8 +27,8 @@
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
-  background: #f6f2ea;
+  min-height: 100dvh;
+  background: var(--surface-soft);
 }
 
 button,
@@ -32,16 +43,16 @@ a {
 }
 
 ::selection {
-  color: #173f35;
-  background: #79b896;
+  color: var(--ink);
+  background: var(--accent);
 }
 
 .font-display {
-  font-family: "Raleway", "Segoe UI", sans-serif;
+  font-family: "Poppins", "Segoe UI", sans-serif;
 }
 
 .focus-ring:focus-visible {
-  outline: 3px solid rgba(47, 191, 115, 0.3);
+  outline: 2px solid var(--accent-dark);
   outline-offset: 2px;
 }
 
@@ -91,4 +102,25 @@ a {
     border-radius: 0;
     box-shadow: none;
   }
+}
+
+@layer base {
+  h1, h2, h3 { text-wrap: balance; }
+  button:not(:disabled), summary { cursor: pointer; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { min-width: 0; max-width: 100%; }
+  input, select, textarea { accent-color: var(--accent-dark); }
+  a:focus-visible, button:focus-visible, summary:focus-visible, tr:focus-visible { outline: 2px solid var(--accent-dark); outline-offset: 3px; }
+}
+.crm-sidebar { overflow-y: auto; }
+.crm-sidebar nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent-dark); }
+.crm-sidebar nav a[aria-current="page"] svg { color: var(--accent-dark); }
+.crm-sidebar .focus-ring:focus-visible { outline-color: var(--accent); }
+.crm-login-art { background-image: linear-gradient(#00000040, #00000040), url("../../public/section-bg.png"); background-size: cover; background-position: center; }
+.crm-login-art blockquote { text-wrap: balance; }
+.crm-brand { display: block; width: 170px; max-width: 100%; height: auto; }
+.crm-brand-compact { width: 40px; height: 40px; }
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px; }
+  .crm-brand { width: 140px; }
+  .crm-brand-compact { width: 40px; }
 }

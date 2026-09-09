@@ -475,16 +475,18 @@ a um ambiente de teste separado; não amplie CORS com curingas.
   Falhas também contam, porque uma consulta falha pode gerar cobrança no provedor.
 - A reserva usa lock transacional no Postgres antes de chamar a InfoSimples;
   requisições concorrentes não podem ultrapassar esse teto pela checagem em paralelo.
-- O limite por IP existente é uma proteção auxiliar: headers de IP precisam de
-  uma cadeia de proxies confiável. Não trate esse limite como defesa anti-bot
-  suficiente. O teto global independe do IP recebido.
+- As consultas usam Turnstile e limites móveis: 2 tentativas/IP/minuto,
+  10 reservas/IP/hora e 10 reservas/WhatsApp/24h. O teto global independe do IP.
+  Leituras e alterações de leads têm cotas separadas. Configure a entrada confiável
+  e valide a resistência a cabeçalhos forjados antes de ativar as consultas.
 - `SEARCH_ENABLED=false` interrompe consultas externas e mantém o CRM funcionando.
 - Ajuste o teto ao custo unitário do seu contrato InfoSimples e configure também
   o limite/alertas na conta do provedor. O teto da aplicação não limita outras
   integrações que usem o mesmo token nem cobranças fora deste sistema.
 - Ao esgotar o teto, a consulta é recusada antes da captura desse novo lead.
-  Para campanhas ou risco de abuso, implemente Turnstile com verificação no
-  servidor antes de aumentar o teto. **Turnstile ainda não está implementado.**
+  Configure as chaves reais do Turnstile e siga a migration e o roteiro de ativação
+  em [Proteção das consultas](../docs/protecao-consultas.md). Mantenha
+  `SEARCH_ENABLED=false` até concluir essas etapas.
 - Não registre corpos de requisição, cookies, URLs com tokens ou senhas em logs.
   Revise a retenção dos logs do provedor. Não habilite Session Replay no CRM.
 

@@ -1,5 +1,7 @@
 const INFOSIMPLES_ENDPOINT =
   "https://api.infosimples.com/api/v2/consultas/inpi/marcas";
+const INFOSIMPLES_POSSIBLE_AVAILABILITY_CODE = 612;
+const INFOSIMPLES_SUCCESS_CODES = new Set([200, 201]);
 
 export type Processo = {
   numero?: string;
@@ -16,6 +18,7 @@ type InfosimplesResponse = {
   code?: number;
   code_message?: string;
   errors?: string[];
+  data_count?: number;
   header?: {
     requested_at?: string;
     elapsed_time_in_milliseconds?: number;
@@ -47,7 +50,7 @@ export async function searchTrademarks(brandName: string) {
   const form = new URLSearchParams({
     token,
     marca: brandName,
-    tipo: "exata",
+    tipo: "radical",
     pesquisa_textual: "false",
     pedidos_vivos: "false",
     pagina: "1",
@@ -74,7 +77,14 @@ export async function searchTrademarks(brandName: string) {
     );
   }
 
-  if (!response.ok || payload.code !== 200) {
+  const isSuccessfulResponse =
+    response.ok && INFOSIMPLES_SUCCESS_CODES.has(payload.code ?? -1);
+  const isPossibleAvailability =
+    response.ok && payload.code === INFOSIMPLES_POSSIBLE_AVAILABILITY_CODE;
+
+  // In this product, the provider's "inexistent" result is a completed
+  // search with no hits and therefore a possible availability signal.
+  if (!isSuccessfulResponse && !isPossibleAvailability) {
     const details = [payload.code_message, ...(payload.errors ?? [])]
       .filter(Boolean)
       .join(" ");

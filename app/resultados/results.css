@@ -1,0 +1,18 @@
+.results-page {
+  --radius-panel: 10px;
+  --radius-card: 12px;
+  --shadow-results: 0 4px 20px #00000004;
+  --shadow-cta: none;
+}
+.results-page #results-title { font-size: clamp(1.75rem, 2.5vw, 2.5rem); line-height: 1.2; overflow-wrap: anywhere; text-wrap: balance; }
+.results-page #registrar { scroll-margin-top: 24px; }
+.results-page table { font-variant-numeric: tabular-nums; }
+.results-page :is(input, select) { min-width: 0; max-width: 100%; }
+.results-page label { min-width: 0; }
+.results-page tr:hover td { background: var(--surface-soft); }
+.results-page :is(a, button, summary):focus-visible { outline: 2px solid var(--accent-dark); outline-offset: 4px; }
+@media (max-width: 620px) {
+  .results-page input:not([type="checkbox"]), .results-page select { font-size: 16px; }
+  .results-page .site-header { gap: 12px; }
+  .results-page .site-header img { width: 140px; height: auto; }
+}
