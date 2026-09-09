@@ -14,7 +14,7 @@ const poppins = localFont({
   display: "swap",
   variable: "--font-poppins",
 });
-const faviconPath = sitePath("/55-marcas-brand-kit/brand/icon.svg");
+const faviconPath = sitePath("/55-marcas-brand-kit/brand/icon.png");
 
 export const metadata: Metadata = {
   title: "55 marcas.",

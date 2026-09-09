@@ -1,6 +1,6 @@
 import logoLight from "../../public/55-marcas-brand-kit/brand/logo-light2.png";
 import logoDark from "../../public/55-marcas-brand-kit/brand/logo-dark.svg";
-import brandIcon from "../../public/55-marcas-brand-kit/brand/icon.svg";
+import brandIcon from "../../public/55-marcas-brand-kit/brand/icon.png";
 import {
   ArrowRight,
   BarChart3,
