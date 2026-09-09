@@ -3,6 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { apiPath } from "@/app/consulta/paths";
 import { focusRing } from "@/app/consulta/ui";
+import { apiError } from "@/app/consulta/api-error";
+import { useCooldown } from "@/app/consulta/use-cooldown";
 
 type LeadCaptureFormProps = {
   brandName: string;
@@ -25,9 +27,11 @@ export default function LeadCaptureForm({
 }: LeadCaptureFormProps) {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [error, setError] = useState("");
+  const { coolingDown, registerError } = useCooldown();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitState === "submitting" || coolingDown) return;
     setSubmitState("submitting");
     setError("");
 
@@ -57,14 +61,13 @@ export default function LeadCaptureForm({
       };
 
       if (!response.ok) {
-        throw new Error(
-          payload.error ?? "Não foi possível enviar seus dados agora.",
-        );
+        throw apiError(response, payload, "Não foi possível enviar seus dados agora.");
       }
 
       setSubmitState("success");
       form.reset();
     } catch (requestError) {
+      registerError(requestError);
       setError(
         requestError instanceof Error
           ? requestError.message
@@ -237,7 +240,7 @@ export default function LeadCaptureForm({
           <button
             className={`mt-5 flex min-h-12 w-full cursor-pointer items-center justify-center rounded-lg border-0 bg-ink px-5 text-[0.8rem] font-bold text-white shadow-cta transition-[background,box-shadow,transform] hover:-translate-y-px hover:bg-ink-soft hover:shadow-none disabled:cursor-wait disabled:opacity-70 ${focusRing}`}
             type="submit"
-            disabled={submitState === "submitting"}
+            disabled={submitState === "submitting" || coolingDown}
           >
             {submitState === "submitting"
               ? "Enviando dados..."

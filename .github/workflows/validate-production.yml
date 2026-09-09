@@ -41,6 +41,8 @@ jobs:
       BETTER_AUTH_URL: http://localhost:3100
       CORS_ORIGINS: http://localhost:3001
       DOCUMENT_STORAGE_DRIVER: local
+      # Public widget identifier only; never put TURNSTILE_SECRET_KEY in this workflow.
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

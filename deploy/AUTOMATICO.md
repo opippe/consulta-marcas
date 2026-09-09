@@ -71,6 +71,12 @@ Variáveis de build comuns: `NODE_VERSION=22.13.0`, `BUN_VERSION=1.3.2`,
 | `55marcas-crm` | `bun install --cwd api-bun --frozen-lockfile && bun install --cwd crm-web --frozen-lockfile && bun run --cwd crm-web build` | `crm-web/dist` |
 
 Na landing: `NEXT_PUBLIC_API_BASE_URL=https://api.55marcas.com.br`.
+Também na landing: `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, com a **Site key pública**
+do widget Turnstile real, em **Settings → Variables and Secrets → Production**.
+No GitHub, cadastrar a mesma chave pública em **Settings → Secrets and variables →
+Actions → Variables**, com o mesmo nome, para o workflow de validação compilar o site.
+A `TURNSTILE_SECRET_KEY` fica somente no Railway, em Variables do serviço da API.
+Veja o [passo a passo de ativação](../docs/protecao-consultas.md#passo-a-passo-nos-painéis).
 No CRM: `VITE_API_BASE_URL=https://api.55marcas.com.br` e
 `VITE_PUBLIC_PROPOSAL_URL=https://crm.55marcas.com.br`.
 

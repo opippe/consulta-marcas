@@ -11,6 +11,9 @@ import { useConsulta } from "@/app/consulta/consulta-context";
 import { apiPath, publicAsset, sitePath } from "@/app/consulta/paths";
 import type { ConsultaApiResponse } from "@/app/consulta/types";
 import "./landing.css";
+import TurnstileChallenge from "@/app/components/consulta/TurnstileChallenge";
+import { apiError } from "@/app/consulta/api-error";
+import { useCooldown } from "@/app/consulta/use-cooldown";
 
 const faqs = [
   ["O diagnóstico é realmente gratuito?", "Sim. A pesquisa preliminar é gratuita. Você informa a marca e seus dados de contato para consultar processos relacionados e entender os próximos passos."],
@@ -31,6 +34,9 @@ export default function Home() {
   const [marca, setMarca] = useState("");
   const [registrationRequested, setRegistrationRequested] = useState(false);
   const [error, setError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [challengeVersion, setChallengeVersion] = useState(0);
+  const { coolingDown, registerError } = useCooldown();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [paused, setPaused] = useState(false);
@@ -61,7 +67,7 @@ export default function Home() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isLoading) return;
+    if (isLoading || coolingDown) return;
 
     if (step === 1) {
       if (marca.trim().length < 2) {
@@ -79,6 +85,7 @@ export default function Home() {
       return;
     }
 
+    if (!turnstileToken) { setError("Conclua a verificação de segurança para consultar."); return; }
     setIsLoading(true);
     setError("");
 
@@ -89,6 +96,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           marca: nomeMarca,
+          turnstileToken,
           ...contact,
           registrationRequested: registrationRequested || queryParams.get("interesse") === "registro",
           attribution: {
@@ -110,9 +118,7 @@ export default function Home() {
       };
 
       if (!response.ok) {
-        throw new Error(
-          payload.error ?? "Não foi possível concluir a consulta agora.",
-        );
+        throw apiError(response, payload, "Não foi possível concluir a consulta agora.");
       }
 
       setConsulta({
@@ -131,12 +137,15 @@ export default function Home() {
       }
       router.push(sitePath(`/resultados?${resultParams.toString()}`));
     } catch (requestError) {
+      registerError(requestError);
       setError(
         requestError instanceof Error
           ? requestError.message
           : "Não foi possível concluir a consulta agora.",
       );
     } finally {
+      setTurnstileToken("");
+      setChallengeVersion(value => value + 1);
       setIsLoading(false);
     }
   }
@@ -165,8 +174,9 @@ export default function Home() {
               <input className="brand-input" id="marca" name="marca" value={marca} onChange={event => { setMarca(event.target.value); setError(""); }} placeholder="Qual nome você quer proteger?" required minLength={2} maxLength={120} autoComplete="off" aria-describedby={error ? "diagnostic-error" : undefined} aria-invalid={error && marca.trim().length < 2 ? true : undefined} />
               <fieldset className="contact-step" hidden={step !== 2} disabled={step !== 2 || isLoading}><legend className="sr-only">Seus dados de contato</legend><ContactFields compact /></fieldset>
               {registrationRequested && <p className="form-note" role="status">Seu interesse em registrar será enviado junto com a consulta.</p>}
+              {step === 2 && !isLoading && <TurnstileChallenge key={challengeVersion} onToken={setTurnstileToken} />}
               {error && <p className="form-error" id="diagnostic-error" role="alert">{error}</p>}
-              <button className={`button button-orange${isLoading ? " is-loading" : ""}`} type="submit" disabled={isLoading}>
+              <button className={`button button-orange${isLoading ? " is-loading" : ""}`} type="submit" disabled={isLoading || coolingDown || (step === 2 && !turnstileToken)}>
                 {isLoading ? <><LoaderCircle className="loading-spinner" size={18} aria-hidden="true" /><span>Consultando sua marca…</span></> : <><span>{step === 1 ? "Começar diagnóstico" : "Consultar disponibilidade"}</span><ArrowRight size={20} aria-hidden="true" /></>}
               </button>
               {step === 2 && <button className="back-button" type="button" disabled={isLoading} onClick={() => { setStep(1); setError(""); requestAnimationFrame(() => document.getElementById("marca")?.focus()); }}>Voltar à primeira etapa</button>}

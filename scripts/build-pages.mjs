@@ -2,6 +2,10 @@ import { spawnSync } from "node:child_process";
 
 // Public build settings only. Never copy server secrets into the static output.
 const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+const turnstileKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
+if (!turnstileKey || /^(1x|2x|3x)0+|SUBSTITUA|troque/i.test(turnstileKey)) {
+  throw new Error("Defina NEXT_PUBLIC_TURNSTILE_SITE_KEY com a chave pública real antes de publicar a landing.");
+}
 if (!apiUrl || new URL(apiUrl).protocol !== "https:") {
   throw new Error("Defina NEXT_PUBLIC_API_BASE_URL com a URL HTTPS da API de produção.");
 }

@@ -1,5 +1,5 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { and, count, eq, gte, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { bodyLimit } from "hono/body-limit";
@@ -25,7 +25,6 @@ import {
 } from "./integrations/infosimples";
 import {
   createPublicToken,
-  createRequestFingerprint,
   hashBytes,
   hashValue,
 } from "./lib/security";
@@ -40,11 +39,12 @@ import { leadInputSchema, searchInputSchema } from "./schemas";
 import { appRouter, createTrpcContext } from "./trpc";
 import { validateProductionConfig } from "./lib/production-config";
 import { logError } from "./lib/log-error";
+import { checkSearchReservation, cleanupPublicRateEvents, consumePublicAttempt, ProtectionError,
+  protectionResponse, publicGroup, unavailable, visitorIdentity } from "./lib/public-protection";
+import { verifyTurnstile } from "./lib/turnstile";
 
 validateProductionConfig();
-class SearchLimitError extends Error {}
-
-const app = new Hono();
+const app = new Hono<{ Bindings: { peerIp?: string }; Variables: { visitor: { ip: string; fingerprint: string } } }>();
 
 app.use("*", async (context, next) => {
   context.header("Cache-Control", "no-store");
@@ -73,10 +73,27 @@ app.use(
     origin: (origin) => (trustedOrigins.includes(origin) ? origin : null),
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type"],
+    exposeHeaders: ["Retry-After"],
     credentials: true,
     maxAge: 86400,
   }),
 );
+
+app.use("/api/*", async (context, next) => {
+  const group = publicGroup(context.req.method, context.req.path);
+  if (!group) return next();
+  try {
+    if (group === "search" && process.env.SEARCH_ENABLED === "false") {
+      throw new ProtectionError("SEARCH_DISABLED", "As consultas estão temporariamente indisponíveis. Tente novamente mais tarde.", 503);
+    }
+    const visitor = await visitorIdentity(context.req.raw.headers, context.env?.peerIp);
+    context.set("visitor", visitor);
+    await consumePublicAttempt(group, visitor.fingerprint);
+  } catch (error) {
+    return protectionResponse(error instanceof ProtectionError ? error : unavailable(), context.req.path);
+  }
+  await next();
+});
 
 app.get("/health", (context) =>
   context.json({ ok: true, service: "flavio-marcas-operations-api" }),
@@ -360,47 +377,19 @@ app.post("/api/marcas", async (context) => {
 
   try {
     const db = getDb();
-    const fingerprint = await createRequestFingerprint(context.req.raw.headers);
-
-    if (fingerprint) {
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      const [{ value }] = await db
-        .select({ value: count() })
-        .from(searches)
-        .where(
-          and(
-            eq(searches.requestFingerprint, fingerprint),
-            gte(searches.createdAt, oneHourAgo),
-          ),
-        );
-
-      if (value >= 10) {
-        return context.json(
-          {
-            error:
-              "Muitas consultas foram realizadas recentemente. Tente novamente mais tarde.",
-          },
-          429,
-        );
-      }
-    }
+    const { ip, fingerprint } = context.get("visitor");
+    await verifyTurnstile(parsed.data.turnstileToken, ip);
 
     const publicToken = createPublicToken();
     const publicTokenHash = await hashValue(publicToken);
     // Persist contact and consent before the provider call so failures do not lose the lead.
     const search = await db.transaction(async (transaction) => {
-      // The short database lock serializes reservations across API replicas.
-      // It is released before contacting the paid provider; failed calls also count.
-      const dailyLimit = Number(process.env.SEARCH_DAILY_LIMIT ?? (process.env.NODE_ENV === "production" ? 30 : 0));
-      if (dailyLimit > 0) {
-        await transaction.execute(sql`select pg_advisory_xact_lock(550001)`);
-        const [{ value }] = await transaction.select({ value: count() }).from(searches)
-          .where(gte(searches.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)));
-        if (value >= dailyLimit) throw new SearchLimitError();
-      }
+      const reservedAt = await checkSearchReservation(transaction, fingerprint, normalizedWhatsapp);
       const [savedSearch] = await transaction.insert(searches).values({
         publicTokenHash,
         requestFingerprint: fingerprint,
+        requestWhatsapp: normalizedWhatsapp,
+        createdAt: reservedAt,
         brandName: parsed.data.marca,
         status: "FAILED",
         attribution: parsed.data.attribution,
@@ -437,6 +426,7 @@ app.post("/api/marcas", async (context) => {
       return savedSearch;
     });
 
+    console.info(JSON.stringify({ event: "search_reserved", count: 1 }));
     const result = await searchTrademarks(parsed.data.marca);
     await db.transaction(async (transaction) => {
       await transaction.update(searches).set({
@@ -474,9 +464,7 @@ app.post("/api/marcas", async (context) => {
       siteReceipts: result.siteReceipts,
     });
   } catch (error) {
-    if (error instanceof SearchLimitError) {
-      return context.json({ error: "O limite de consultas foi atingido. Tente novamente mais tarde." }, 429);
-    }
+    if (error instanceof ProtectionError) return protectionResponse(error, context.req.path);
     logError("Failed to search trademarks", error);
     if (error instanceof InfosimplesError) {
       return context.json({ error: error.message }, error.status as 500 | 502);
@@ -724,11 +712,20 @@ app.onError((error, context) => {
 
 const port = Number(process.env.PORT ?? 3100);
 
+if (import.meta.main) {
+  const cleanup = () => void cleanupPublicRateEvents().catch(() =>
+    console.warn(JSON.stringify({ event: "public_rate_cleanup_failed" })));
+  cleanup();
+  setInterval(cleanup, 60000).unref();
+}
+
 export default {
   port,
   hostname: "0.0.0.0",
   // Some INPI searches take longer than Bun's default idle timeout.
   idleTimeout: 255,
   maxRequestBodySize: getMaxDocumentSizeBytes() + 64 * 1024,
-  fetch: app.fetch,
+  fetch(request: Request, server?: { requestIP(request: Request): { address: string } | null }) {
+    return app.fetch(request, { peerIp: server?.requestIP(request)?.address });
+  },
 };

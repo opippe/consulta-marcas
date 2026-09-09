@@ -1,6 +1,8 @@
 import { validateDocumentStorage } from "./document-storage";
+import { validateProtectionConfig } from "./protection-config";
 
 export function validateProductionConfig() {
+  validateProtectionConfig();
   validateDocumentStorage();
   if (process.env.NODE_ENV !== "production") return;
   for (const name of ["DATABASE_URL", "INFOSIMPLES_TOKEN", "CORS_ORIGINS", "BETTER_AUTH_URL"]) {

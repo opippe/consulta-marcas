@@ -11,10 +11,13 @@ test("captures consultation leads, promotes interest once, and preserves failed 
   }
   const previousLimit = process.env.SEARCH_DAILY_LIMIT;
   const previousEnabled = process.env.SEARCH_ENABLED;
+  const protectionEnv = Object.fromEntries(["CLIENT_IP_MODE", "RATE_LIMIT_SALT", "SEARCH_ATTEMPTS_PER_MINUTE", "PUBLIC_READS_PER_MINUTE", "PUBLIC_WRITES_PER_MINUTE"].map(key => [key, process.env[key]]));
+  Object.assign(process.env, { CLIENT_IP_MODE: "railway", RATE_LIMIT_SALT: "lead-test-salt", SEARCH_ATTEMPTS_PER_MINUTE: "100", PUBLIC_READS_PER_MINUTE: "100", PUBLIC_WRITES_PER_MINUTE: "100" });
   const db = getDb();
   const rollback = new Error("ROLLBACK_TEST_FIXTURES");
   let providerCalls = 0;
   let failProvider = false;
+  mock.module("../src/lib/turnstile", () => ({ verifyTurnstile: async () => {} }));
   mock.module("../src/integrations/infosimples", () => ({
     InfosimplesError: class extends Error {},
     searchTrademarks: async () => {
@@ -28,7 +31,7 @@ test("captures consultation leads, promotes interest once, and preserves failed 
       mock.module("../src/db/client", () => ({ getDb: () => transaction, closeDb }));
       const { default: api } = await import("../src/index");
       const post = (path: string, body: unknown) => api.fetch(new Request(`http://localhost${path}`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+        method: "POST", headers: { "Content-Type": "application/json", "x-real-ip": "203.0.113.99" }, body: JSON.stringify(body),
       }));
       const marca = `QA-${crypto.randomUUID()}`;
       const data = {
@@ -61,7 +64,7 @@ test("captures consultation leads, promotes interest once, and preserves failed 
       const events = await transaction.select().from(leadEvents)
         .where(and(eq(leadEvents.leadId, record.lead.id), eq(leadEvents.type, "REGISTRATION_REQUESTED")));
       expect(events).toHaveLength(1);
-      const state = await api.fetch(new Request(`http://localhost/api/leads/interest?token=${searchToken}`));
+      const state = await api.fetch(new Request(`http://localhost/api/leads/interest?token=${searchToken}`, { headers: { "x-real-ip": "203.0.113.99" } }));
       expect(await state.json()).toEqual({ captured: true, requested: true });
       expect((await post("/api/leads/interest", { searchToken: "x".repeat(60) })).status).toBe(404);
 
@@ -105,6 +108,10 @@ test("captures consultation leads, promotes interest once, and preserves failed 
     else process.env.SEARCH_DAILY_LIMIT = previousLimit;
     if (previousEnabled === undefined) delete process.env.SEARCH_ENABLED;
     else process.env.SEARCH_ENABLED = previousEnabled;
+    for (const [key, value] of Object.entries(protectionEnv)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
     mock.restore();
     await closeDb();
   }

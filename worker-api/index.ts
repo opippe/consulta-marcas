@@ -1,6 +1,9 @@
+import { publicProxyHeaders } from "../api-bun/src/lib/proxy-headers";
+
 interface Env {
   CORS_ORIGIN: string;
   OPERATIONS_API_URL?: string;
+  PUBLIC_PROXY_SECRET?: string;
 }
 
 function corsHeaders(request: Request, env: Env) {
@@ -11,6 +14,7 @@ function corsHeaders(request: Request, env: Env) {
     headers.set("Access-Control-Allow-Origin", configuredOrigin);
     headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     headers.set("Access-Control-Allow-Headers", "Content-Type");
+    headers.set("Access-Control-Expose-Headers", "Retry-After");
     headers.set("Vary", "Origin");
   }
   return headers;
@@ -37,12 +41,15 @@ const worker = {
       return Response.json({ error: "O backend operacional ainda não foi configurado." }, { status: 503, headers });
     }
     try {
+      const forwardedHeaders = publicProxyHeaders(request.headers.get("cf-connecting-ip"), env.PUBLIC_PROXY_SECRET);
+      if (!forwardedHeaders) return Response.json({ error: "A verificação de segurança está temporariamente indisponível.", code: "PROTECTION_UNAVAILABLE" }, { status: 503, headers });
       const response = await fetch(`${baseUrl}${pathname}${url.search}`, {
         method: request.method,
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: forwardedHeaders,
         body: request.method === "POST" ? await request.text() : undefined,
       });
       headers.set("Content-Type", "application/json");
+      if (response.headers.has("Retry-After")) headers.set("Retry-After", response.headers.get("Retry-After")!);
       return new Response(await response.text(), { status: response.status, headers });
     } catch {
       return Response.json({ error: "Não foi possível acessar o backend operacional." }, { status: 502, headers });
