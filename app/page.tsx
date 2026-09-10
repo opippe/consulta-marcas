@@ -14,6 +14,7 @@ import "./landing.css";
 import TurnstileChallenge from "@/app/components/consulta/TurnstileChallenge";
 import { apiError } from "@/app/consulta/api-error";
 import { useCooldown } from "@/app/consulta/use-cooldown";
+import { navigateToSection } from "@/app/consulta/section-navigation";
 
 const faqs = [
   ["O diagnóstico é realmente gratuito?", "Sim. A pesquisa preliminar é gratuita. Você informa a marca e seus dados de contato para consultar processos relacionados e entender os próximos passos."],
@@ -151,7 +152,7 @@ export default function Home() {
   }
 
   return (
-    <div className="landing" id="top">
+    <div className="landing" id="top" onClick={navigateToSection}>
       <a className="skip-link" href="#diagnostico">Ir para o diagnóstico gratuito</a>
       <ConsultaHeader registrationHref="#diagnostico" />
       <main>

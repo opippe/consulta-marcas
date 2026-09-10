@@ -34,13 +34,8 @@
 
   html {
     background: var(--background);
-    scroll-behavior: smooth;
-  }
-
-  @media (hover: none), (pointer: coarse) {
-    html {
-      scroll-behavior: auto;
-    }
+    /* Section links opt into smooth scrolling; router restoration stays instant. */
+    scroll-behavior: auto;
   }
 
   body {
