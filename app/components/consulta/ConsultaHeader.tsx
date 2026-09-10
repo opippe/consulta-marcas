@@ -40,7 +40,7 @@ export default function ConsultaHeader({
       )}
       {showNavigation && (
         <nav className="flex items-center gap-8 text-sm text-ink-soft max-tablet:hidden" aria-label="Navegação principal">
-          {[["Serviços", "servicos"], ["Como funciona", "como-funciona"], ["Dúvidas", "faq"]].map(([label, id]) => <Link className={`inline-flex min-h-11 items-center no-underline hover:text-accent-dark ${focusRing}`} href={sitePath(`/#${id}`)} key={id}>{label}</Link>)}
+          {[["Serviços", "servicos"], ["Como funciona", "como-funciona"], ["Dúvidas", "faq"]].map(([label, id]) => <a className={`inline-flex min-h-11 items-center no-underline hover:text-accent-dark ${focusRing}`} href={sitePath(`/#${id}`)} key={id}>{label}</a>)}
         </nav>
       )}
       {showRegistrationCta && (

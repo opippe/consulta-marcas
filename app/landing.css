@@ -5,7 +5,7 @@
 .landing :is(section[id]) { scroll-margin-top: 28px; }
 .skip-link { position: fixed; left: 20px; top: -100px; z-index: 100; background: #000; color: #fff; padding: 16px; }
 .skip-link:focus { top: 12px; }
-.hero { position: relative; overflow: hidden; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .9fr); gap: 36px 72px; padding-top: 78px; }
+.hero { position: relative; overflow: clip; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .9fr); gap: 36px 72px; padding-top: 78px; }
 .hero-texture { position: absolute; inset: -200px ; background-size: cover; background-position: center; z-index: -1; transform: rotate(-5deg); }
 .hero-copy { min-width: 0; padding-block: 25px 35px; animation: landing-enter .7s ease-out both; }
 .kicker { display: flex; align-items: center; gap: 10px; margin: 0 0 26px; font-size: 12px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
